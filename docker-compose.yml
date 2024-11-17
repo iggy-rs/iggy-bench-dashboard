@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    restart: always
+    environment:
+      - INFLUXDB_DB=influx
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=admin
+    ports:
+      - '8086:8086'
+    volumes:
+      - influxdb_data:/var/lib/influxdb  # Mount the InfluxDB data directory
+    networks:
+      - iggy
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    user: '0'
+    networks:
+      - iggy
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana_data:/var/lib/grafana  # Mount the Grafana data directory
+    env_file:
+      - ./configs/grafana_config.env
+
+networks:
+  iggy:
+    driver: bridge
+
+volumes:
+  grafana_data: {}  # Volume for Grafana data
+  influxdb_data: {}  # Volume for InfluxDB data
