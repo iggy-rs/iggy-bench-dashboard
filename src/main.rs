@@ -1,7 +1,6 @@
 mod app;
 mod args;
 mod db;
-mod flow;
 mod github;
 mod models;
 mod validate;
@@ -19,5 +18,5 @@ async fn main() -> Result<()> {
     args.validate()?;
     let app = IggyDashboardApp::new(args)?;
 
-    app.run()
+    app.run().await
 }

@@ -1,4 +1,5 @@
 use super::{aggregate_statistics::BenchmarkAggregateStatistics, params::BenchmarkParams};
+use anyhow::{Context, Result};
 use chrono::{DateTime, TimeZone, Utc};
 use influxdb::InfluxDbWriteable;
 
@@ -45,32 +46,37 @@ pub struct BenchmarkSummary {
 }
 
 impl BenchmarkSummary {
-    pub fn new(directory: &str, commit_or_tag: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        println!("Reading from directory: {}", directory);
-
-        let params_str = std::fs::read_to_string(format!("{}/params.toml", directory))
-            .expect("Failed to read params.toml");
+    pub fn new(directory: &str, commit_or_tag: &str) -> Result<Self> {
+        let params_file = format!("{}/params.toml", directory);
+        let params_str = std::fs::read_to_string(&params_file)
+            .context(format!("Failed to read {params_file}"))?;
         let params: BenchmarkParams =
             toml::from_str(&params_str).expect("Failed to parse params.toml");
 
-        let producers_file =
-            std::fs::exists(format!("{}/producers_summary.toml", directory)).unwrap();
-        let consumers_file =
-            std::fs::exists(format!("{}/consumers_summary.toml", directory)).unwrap();
+        let producers_file = format!("{}/producers_summary.toml", directory);
+        let consumers_file = format!("{}/consumers_summary.toml", directory);
 
-        if !producers_file && !consumers_file {
+        let producers_file_exists =
+            std::fs::exists(&producers_file).context(format!("Failed to find {producers_file}"))?;
+        let consumers_file_exists =
+            std::fs::exists(&consumers_file).context(format!("Failed to find {consumers_file}"))?;
+
+        if !producers_file_exists && !consumers_file_exists {
             panic!("Failed to find producers_summary.toml or consumers_summary.toml");
         }
 
-        let stats_file = if producers_file {
-            format!("{}/producers_summary.toml", directory)
+        let stats_file = if producers_file_exists {
+            producers_file
         } else {
-            format!("{}/consumers_summary.toml", directory)
+            consumers_file
         };
 
-        let stats_str = std::fs::read_to_string(stats_file).unwrap();
-        let stats: BenchmarkAggregateStatistics =
-            toml::from_str(&stats_str).expect("Failed to parse producers_summary.toml");
+        let stats_str =
+            std::fs::read_to_string(&stats_file).context(format!("Failed to read {stats_file}"))?;
+        let stats: BenchmarkAggregateStatistics = toml::from_str(&stats_str).context(format!(
+            "Failed to parse {} into BenchmarkAggregateStatistics",
+            stats_file
+        ))?;
 
         Ok(BenchmarkSummary {
             time: Utc.timestamp_nanos(params.timestamp_micros * 1000),

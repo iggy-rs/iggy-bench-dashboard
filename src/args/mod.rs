@@ -1,6 +1,6 @@
-mod ingest;
-mod local_benchmark;
-mod poll_github;
+pub mod ingest;
+pub mod local_benchmark;
+pub mod poll_github;
 
 use crate::validate::Validatable;
 use anyhow::Result;
@@ -14,7 +14,7 @@ use poll_github::PollGithubArgs;
 pub struct IggyDashboardArgs {
     /// Subcommand to run
     #[command(subcommand)]
-    subcommand: IggyDashboardSubcommand,
+    pub subcommand: IggyDashboardSubcommand,
 }
 
 impl Validatable for IggyDashboardArgs {
@@ -24,16 +24,21 @@ impl Validatable for IggyDashboardArgs {
 }
 
 #[derive(Debug, Subcommand)]
-enum IggyDashboardSubcommand {
+pub enum IggyDashboardSubcommand {
     /// Automatically download the latest successful workflow run artifact from GitHub.
+    ///
     /// This is blocking and will run forever - useful for hosting on a server.
     PollGithub(PollGithubArgs),
 
-    /// Ingest a single performance result from either directory or GitHub artifact and add data to local InfluxDB
-    /// This is a one-time operation and will exit after ingesting the data.
+    /// Ingest a single performance result from local dir or GitHub and put data into the database.
+    ///
+    /// This is a single-shot operation and will exit after ingesting the data and
+    /// adding it to the database.
     Ingest(IngestArgs),
 
-    /// Local flow to run benchmarks and ingest results
+    /// Run benchmarks on local iggy repository and ingest the results into the database.
+    ///
+    /// This is a single-shot operation and will exit after running the benchmarks n-times.
     LocalBenchmark(LocalBenchmarkArgs),
 }
 

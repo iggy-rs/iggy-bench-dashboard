@@ -6,10 +6,16 @@ use std::path::Path;
 #[derive(Debug, Args)]
 pub struct LocalBenchmarkArgs {
     /// Path to the `iggy` repository
-    directory: String,
+    #[arg(long)]
+    pub directory: String,
+
+    /// Git ref (tag, branch or sha1) to start benchmark from
+    #[arg(long)]
+    pub git_ref: String,
 
     /// How many commits or tags to go back
-    count: u64,
+    #[arg(long)]
+    pub count: u64,
 }
 
 impl Validatable for LocalBenchmarkArgs {
