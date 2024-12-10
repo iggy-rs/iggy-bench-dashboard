@@ -18,18 +18,18 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 1,
+  "id": 2,
   "links": [],
   "panels": [
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "ce58m6y9miwowf"
+        "uid": "P3C6603E967DC8568"
       },
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
           },
           "custom": {
             "axisBorderShow": false,
@@ -37,31 +37,16 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": -1,
-            "barWidthFactor": 0.4,
-            "drawStyle": "line",
-            "fillOpacity": 8,
+            "fillOpacity": 50,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineStyle": {
-              "fill": "solid"
-            },
-            "lineWidth": 3,
-            "pointSize": 11,
+            "lineWidth": 1,
             "scaleDistribution": {
               "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -70,112 +55,84 @@
           "displayName": "${__field.labels.__values}",
           "fieldMinMax": false,
           "mappings": [],
+          "min": 0,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
-                "color": "red",
-                "value": 80
+                "color": "green",
+                "value": 95
               }
             ]
           },
           "unit": "MBs"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "80%+"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 13,
-        "w": 24,
+        "h": 12,
+        "w": 12,
         "x": 0,
         "y": 0
       },
       "id": 1,
       "options": {
+        "barRadius": 0,
+        "barWidth": 0.66,
+        "colorByField": "total_throughput_megabytes_per_second",
+        "fullHighlight": false,
+        "groupWidth": 0.7,
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false
+          "showLegend": true
         },
+        "orientation": "auto",
+        "showValue": "always",
+        "stacking": "none",
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": -30,
+        "xTickLabelSpacing": 0
       },
       "pluginVersion": "11.3.1",
-      "repeatDirection": "h",
       "targets": [
         {
-          "alias": "",
           "datasource": {
             "type": "influxdb",
-            "uid": "ce58m6y9miwowf"
-          },
-          "groupBy": [
-            {
-              "params": [
-                "git_ref::tag"
-              ],
-              "type": "tag"
-            }
-          ],
-          "measurement": "performance_metrics",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "SELECT\n  total_throughput_megabytes_per_second\nFROM\n  performance_metrics\nWHERE\n  benchmark_name = 'send messages' AND\n  message_size = '1000' AND\n  messages_per_batch = '1000' AND\n  message_batches = '1000' AND\n  producers = '8' AND\n  consumers = '0'\nGROUP BY\n  git_ref",
-          "rawQuery": true,
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "total_throughput_megabytes_per_second"
-                ],
-                "type": "field"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "benchmark_name::tag",
-              "operator": "=",
-              "value": "send messages"
-            },
-            {
-              "condition": "AND",
-              "key": "producers::tag",
-              "operator": "=",
-              "value": "8"
-            },
-            {
-              "condition": "AND",
-              "key": "message_size::tag",
-              "operator": "=",
-              "value": "1000"
-            },
-            {
-              "condition": "AND",
-              "key": "message_batches::tag",
-              "operator": "=",
-              "value": "1000"
-            },
-            {
-              "condition": "AND",
-              "key": "messages_per_batch::tag",
-              "operator": "=",
-              "value": "1000"
-            }
-          ]
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "ce58m6y9miwowf"
+            "uid": "P3C6603E967DC8568"
           },
           "groupBy": [
             {
@@ -191,12 +148,11 @@
               "type": "fill"
             }
           ],
-          "hide": false,
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT\n  total_throughput_megabytes_per_second\nFROM\n  performance_metrics\nWHERE\n  benchmark_name = 'send messages' AND\n  message_size = '1000' AND\n  messages_per_batch = '1000' AND\n  message_batches = '1000' AND\n  producers = '8' AND\n  consumers = '0'\nGROUP BY\n  git_ref",
+          "query": "SELECT\n  git_ref, total_throughput_megabytes_per_second\nFROM\n  performance_metrics\nWHERE\n  benchmark_name = 'send messages' AND\n  message_size = '1000' AND\n  messages_per_batch = '1000' AND\n  message_batches = '1000' AND\n  producers = '8' AND\n  consumers = '0'",
           "rawQuery": true,
-          "refId": "B",
+          "refId": "A",
           "resultFormat": "table",
           "select": [
             [
@@ -215,37 +171,302 @@
           "tags": []
         }
       ],
-      "title": "Send - 1000 batches, 1000 messages per batch, 1000 bytes per message, 8 producers",
-      "type": "timeseries"
+      "title": "Throughput - 8 producers, 1000 batches, 1000 messages per batch, 1000 bytes per message",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P3C6603E967DC8568"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "displayName": "${__field.labels.__values}",
+          "fieldMinMax": false,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 95
+              }
+            ]
+          },
+          "unit": "pps"
+        },
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "80%+"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.66,
+        "colorByField": "total_throughput_megabytes_per_second",
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "always",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": -30,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C6603E967DC8568"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT\n  git_ref, total_throughput_messages_per_second\nFROM\n  performance_metrics\nWHERE\n  benchmark_name = 'send messages' AND\n  message_size = '1000' AND\n  messages_per_batch = '1000' AND\n  message_batches = '1000' AND\n  producers = '8' AND\n  consumers = '0'",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "table",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "title": "Messages/s - 8 producers, 1000 batches, 1000 messages per batch, 1000 bytes per message",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P3C6603E967DC8568"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "yellow",
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "displayName": "${__field.labels.__values}",
+          "fieldMinMax": false,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "id": 3,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.66,
+        "colorByField": "total_throughput_megabytes_per_second",
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "always",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": -30,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C6603E967DC8568"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT\n  git_ref, average_avg_latency_ms, average_p99_latency_ms\nFROM\n  performance_metrics\nWHERE\n  benchmark_name = 'send messages' AND\n  message_size = '1000' AND\n  messages_per_batch = '1000' AND\n  message_batches = '1000' AND\n  producers = '8' AND\n  consumers = '0'",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "table",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "title": "Latency - 8 producers, 1000 batches, 1000 messages per batch, 1000 bytes per message",
+      "type": "barchart"
     }
   ],
   "preload": false,
   "schemaVersion": 40,
   "tags": [],
   "templating": {
-    "list": [
-      {
-        "current": {
-          "text": "",
-          "value": ""
-        },
-        "name": "query0",
-        "options": [],
-        "query": "",
-        "refresh": 1,
-        "regex": "",
-        "type": "query"
-      }
-    ]
+    "list": []
   },
   "time": {
-    "from": "now-7d",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "New dashboard",
-  "uid": "de5ja2f13qww0b",
-  "version": 13,
+  "title": "Producers performance on write",
+  "uid": "ae5p4h2kwgohsc",
+  "version": 10,
   "weekStart": ""
 }
