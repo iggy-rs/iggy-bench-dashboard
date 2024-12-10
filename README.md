@@ -11,9 +11,8 @@ InfluxDB and grafana should be started using docker-compose up -d in the root of
 
 ## Requirements
 
-```bash
-sudo apt install git docker docker-compose
-```
+- Docker
+- Rust compiler
 
 ## Usage
 
