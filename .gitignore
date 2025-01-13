@@ -6,6 +6,9 @@
 # Trunk build directory
 /frontend/dist
 
+# Frontend index.html that will be overwritten by proper index.html (see frontend/scripts/select_index.sh
+/frontend/index.html
+
 # Json's, html's
 /performance_results
 
