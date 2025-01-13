@@ -92,7 +92,7 @@ impl BenchmarkInfoFromDirectoryName {
         let parts: Vec<&str> = dirname.split('_').collect();
         if parts.len() >= 2 {
             if let Some(version) = parts.get(parts.len() - 2) {
-                if version.len() == 8 {
+                if version.len() == 8 || version.contains('.') {
                     if let Some(hardware) = parts.last() {
                         let name = parts[..parts.len() - 2].join("_");
                         return Some(BenchmarkInfoFromDirectoryName {
