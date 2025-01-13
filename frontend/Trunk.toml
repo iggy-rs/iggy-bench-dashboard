@@ -1,0 +1,9 @@
+[build]
+target = "index.html"
+dist = "dist"
+
+[watch]
+watch = ["src", "assets", "index.html"]
+
+[serve]
+port = 8081

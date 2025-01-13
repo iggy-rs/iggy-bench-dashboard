@@ -1,0 +1,21 @@
+# Rust build directories
+/target
+/frontend/target
+/server/target
+
+# Trunk build directory
+/frontend/dist
+
+# Json's, html's
+/performance_results
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS-specific files
+.DS_Store
+Thumbs.db
