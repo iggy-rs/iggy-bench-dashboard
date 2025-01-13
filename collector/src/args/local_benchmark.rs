@@ -16,6 +16,10 @@ pub struct LocalBenchmarkArgs {
     /// How many commits or tags to go back
     #[arg(long)]
     pub count: u64,
+
+    /// Skip checking out master branch before running benchmarks
+    #[arg(long)]
+    pub skip_master_checkout: bool,
 }
 
 impl Validatable for LocalBenchmarkArgs {

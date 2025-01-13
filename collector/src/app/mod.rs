@@ -82,7 +82,9 @@ impl IggyDashboardApp {
         let repo_path = args.directory.clone();
         let local_benchmark = LocalBenchmarkRunner::new(&repo_path)?;
         local_benchmark.fetch_from_remote()?;
-        local_benchmark.checkout_origin_master()?;
+        if !args.skip_master_checkout {
+            local_benchmark.checkout_origin_master()?;
+        }
         local_benchmark.build_benchmark_bin().await?;
         local_benchmark.copy_scripts_and_bench_to_temp_dir().await?;
         local_benchmark.checkout_to_git_ref(&args.git_ref)?;
