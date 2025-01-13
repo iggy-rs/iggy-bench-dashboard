@@ -181,4 +181,4 @@ The server provides the following REST API endpoints:
 
 ## License
 
-TODO
+Apache-2.0

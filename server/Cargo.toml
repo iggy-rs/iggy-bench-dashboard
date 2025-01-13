@@ -2,6 +2,7 @@
 name = "iggy-dashboard-server"
 version.workspace = true
 edition.workspace = true
+license = "Apache-2.0"
 
 [dependencies]
 actix-cors = "0.7.0"
