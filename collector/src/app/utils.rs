@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use std::path::PathBuf;
 use tempfile::TempDir;
 use tokio::fs;
+use tracing::info;
 
 /// Retrieves the full path to the `performance_results` directory within a `TempDir`.
 pub async fn get_performance_results_directory(tempdir: &TempDir) -> Result<String> {
@@ -53,7 +54,7 @@ pub async fn get_performance_results_directory(tempdir: &TempDir) -> Result<Stri
 }
 
 pub async fn consume_benchmark_results(directory: &str) -> Result<()> {
-    println!("Consuming benchmark results from {directory}...");
+    info!("Consuming benchmark results from {}...", directory);
 
     // let mut git_ref_dir = fs::read_dir(directory).await?;
 
@@ -61,20 +62,20 @@ pub async fn consume_benchmark_results(directory: &str) -> Result<()> {
     // while let Some(entry) = git_ref_dir.next_entry().await? {
     //     if entry.metadata().await?.is_dir() {
     //         let git_ref = entry.file_name().clone().into_string().unwrap();
-    //         println!("Processing git ref {git_ref}...");
+    //         info!("Processing git ref {git_ref}...");
 
     //         let mut benchmark_dir = fs::read_dir(entry.path()).await?;
 
     //         // Iterate over directories in the given commit directory (benchmarks)
     //         while let Some(entry) = benchmark_dir.next_entry().await? {
-    //             println!("Processing benchmark {:?}", entry.file_name());
+    //             info!("Processing benchmark {:?}", entry.file_name());
     //             if entry.metadata().await?.is_dir() {
     //                 let entry_path = entry.path().to_str().unwrap().to_owned();
     //                 let summary = BenchmarkSummary::new(&entry_path, &git_ref).context(format!(
     //                     "Failed to create BenchmarkSummary for {entry_path}"
     //                 ))?;
     //                 let uid = summary.uid;
-    //                 println!("UID: {uid}");
+    //                 info!("UID: {uid}");
 
     //                 let raw_data = BenchmarkActorRecord::from_file(directory, uid, DB_NAME)
     //                     .context(format!(
@@ -84,10 +85,10 @@ pub async fn consume_benchmark_results(directory: &str) -> Result<()> {
     //                 db.query(summary.into_query(DB_NAME)).await?;
     //                 db.query(raw_data).await?;
 
-    //                 println!("Finished processing benchmark {:?}", entry.file_name());
+    //                 info!("Finished processing benchmark {:?}", entry.file_name());
     //             }
     //         }
-    //         println!("Finished processing git ref {git_ref}");
+    //         info!("Finished processing git ref {git_ref}");
     //     }
     // }
 

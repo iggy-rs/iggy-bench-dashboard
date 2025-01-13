@@ -14,6 +14,10 @@ pub struct IggyDashboardArgs {
     #[arg(long, short)]
     pub output_dir: String,
 
+    /// Log level (error|warn|info|debug|trace)
+    #[arg(long, default_value = "info")]
+    pub log_level: String,
+
     /// Subcommand to run
     #[command(subcommand)]
     pub subcommand: IggyDashboardSubcommand,

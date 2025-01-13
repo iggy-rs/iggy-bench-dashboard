@@ -10,6 +10,7 @@ use anyhow::Result;
 use local_benchmark_runner::LocalBenchmarkRunner;
 use std::time::Duration;
 use tokio::time::sleep;
+use tracing::info;
 use utils::{consume_benchmark_results, get_performance_results_directory};
 
 pub struct IggyDashboardApp {
@@ -32,7 +33,8 @@ impl IggyDashboardApp {
 
     async fn poll_github(&self, branch: &str, interval_seconds: u64) -> Result<()> {
         let gh = IggyDashboardGithubClient::new()?;
-        println!("Polling GitHub for successful workflow runs on branch {branch} every {interval_seconds} seconds...");
+
+        info!("Polling GitHub for successful workflow runs on branch {branch} every {interval_seconds} seconds...");
 
         loop {
             let workflows = gh.get_successful_workflow_runs(branch).await?;
@@ -48,7 +50,7 @@ impl IggyDashboardApp {
                         sha1.clone().chars().take(8).collect()
                     };
 
-                println!(
+                info!(
                     "Checking if git ref {} sha1 {} exists in db...",
                     git_ref, sha1
                 );
@@ -92,7 +94,7 @@ impl IggyDashboardApp {
         let commits = local_benchmark.get_last_n_commits(&args.git_ref, args.count)?;
 
         for commit in commits {
-            println!("Processing commit: {}", commit);
+            info!("Processing commit: {}", commit);
             local_benchmark.checkout_to_git_ref(&commit)?;
             local_benchmark.run_benchmark().await?;
         }

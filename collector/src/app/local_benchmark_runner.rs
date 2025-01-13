@@ -7,6 +7,7 @@ use git2::{
 };
 use tempfile::TempDir;
 use tokio::{fs, process::Command};
+use tracing::{error, info};
 
 pub struct LocalBenchmarkRunner {
     iggy_repository_path: PathBuf,
@@ -21,7 +22,7 @@ impl LocalBenchmarkRunner {
             .with_context(|| format!("Failed to open repository at '{}'", iggy_repository_path))?;
 
         let iggy_repository_path = PathBuf::from(iggy_repository_path).canonicalize()?;
-        println!("Opened repository at '{}'", iggy_repository_path.display());
+        info!("Opened repository at '{}'", iggy_repository_path.display());
         Ok(Self {
             iggy_repository_path,
             repo,
@@ -38,7 +39,7 @@ impl LocalBenchmarkRunner {
             .checkout_head(Some(CheckoutBuilder::new().force()))
             .with_context(|| "Failed to checkout HEAD".to_string())?;
 
-        println!("Checked out to '{}'", ref_name);
+        info!("Checked out to '{}'", ref_name);
 
         Ok(())
     }
@@ -56,7 +57,7 @@ impl LocalBenchmarkRunner {
 
         let refspecs: Vec<&str> = Vec::new();
 
-        println!("Fetching from origin...");
+        info!("Fetching from origin...");
 
         remote
             .fetch(&refspecs, Some(&mut fetch_options), None)
@@ -66,7 +67,7 @@ impl LocalBenchmarkRunner {
     }
 
     pub async fn build_benchmark_bin(&self) -> Result<()> {
-        println!("Building benchmark binary...");
+        info!("Building benchmark binary...");
         let build_output = Command::new("cargo")
             .arg("build")
             .arg("--release")
@@ -79,7 +80,7 @@ impl LocalBenchmarkRunner {
 
         if !build_output.status.success() {
             let stderr = String::from_utf8_lossy(&build_output.stderr);
-            eprintln!("{}", stderr);
+            error!("{}", stderr);
             anyhow::bail!("Failed to build benchmark binary");
         }
         Ok(())
@@ -89,7 +90,7 @@ impl LocalBenchmarkRunner {
         let scripts_dir = self.repo.workdir().unwrap().join("scripts");
         let temp_dir = self.temp_dir.path().join("scripts");
 
-        println!(
+        info!(
             "Copying {} to {}...",
             scripts_dir.display(),
             temp_dir.display()
@@ -105,7 +106,7 @@ impl LocalBenchmarkRunner {
 
         let temp_bench_bin = self.temp_dir.path().join("iggy-bench");
 
-        println!(
+        info!(
             "Copying {} to {}...",
             bench_bin.display(),
             temp_bench_bin.display()
@@ -127,7 +128,7 @@ impl LocalBenchmarkRunner {
             .checkout_head(Some(CheckoutBuilder::new().force()))
             .with_context(|| format!("Failed to checkout branch '{}'", branch_name))?;
 
-        println!("Checked out to branch '{}'", branch_name);
+        info!("Checked out to branch '{}'", branch_name);
 
         Ok(())
     }
@@ -147,7 +148,7 @@ impl LocalBenchmarkRunner {
             .checkout_head(Some(CheckoutBuilder::new().force()))
             .with_context(|| format!("Failed to checkout commit '{}'", commit_ref))?;
 
-        println!("Checked out to commit '{}'", commit_ref);
+        info!("Checked out to commit '{}'", commit_ref);
 
         Ok(())
     }
@@ -171,7 +172,7 @@ impl LocalBenchmarkRunner {
 
                     self.checkout_branch(&branch)?;
 
-                    println!(
+                    info!(
                         "Created and checked out to local branch '{}' tracking '{}'",
                         git_ref, remote_branch_ref
                     );
@@ -186,7 +187,7 @@ impl LocalBenchmarkRunner {
 
     /// Retrieves the last `n` commits up to `git_ref`, inclusive.
     pub fn get_last_n_commits(&self, git_ref: &str, n: u64) -> Result<Vec<String>> {
-        println!("Getting last {} commits starting from '{}'", n, git_ref);
+        info!("Getting last {} commits starting from '{}'", n, git_ref);
 
         // Resolve the git_ref to a Git object (could be a commit, tag, or branch)
         let obj = self
@@ -225,9 +226,9 @@ impl LocalBenchmarkRunner {
         // Reverse to start from the oldest commit to the newest
         commits.reverse();
 
-        println!("Successfully retrieved the following commits for benchmarking:");
+        info!("Successfully retrieved the following commits for benchmarking:");
         for commit in &commits {
-            println!(" - {}", commit);
+            info!(" - {}", commit);
         }
 
         Ok(commits)
@@ -244,7 +245,7 @@ impl LocalBenchmarkRunner {
             anyhow::bail!("Benchmark script not found at '{}'", script_path.display());
         }
 
-        println!(
+        info!(
             "Running benchmark script: {} {} in {}",
             script_path.display(),
             bench_bin_path.display(),
@@ -266,7 +267,7 @@ impl LocalBenchmarkRunner {
             anyhow::bail!("Benchmark script exited with status {}", status);
         }
 
-        println!("Benchmark completed successfully.");
+        info!("Benchmark completed successfully.");
 
         Ok(())
     }

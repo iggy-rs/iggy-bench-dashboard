@@ -11,6 +11,7 @@ use octocrab::{
 use std::io::Cursor;
 use tempfile::TempDir;
 use tokio::fs::read_dir;
+use tracing::info;
 use zip::ZipArchive;
 
 const OWNER: &str = "iggy-rs";
@@ -51,7 +52,7 @@ impl IggyDashboardGithubClient {
         let artifact = &artifacts[0];
         let artifact_id = artifact.id;
 
-        println!("Downloading artifact ID: {}", artifact_id);
+        info!("Downloading artifact ID: {}", artifact_id);
 
         // Download the artifact as bytes in ZIP format
         let bytes = self
@@ -59,7 +60,7 @@ impl IggyDashboardGithubClient {
             .actions()
             .download_artifact(OWNER, REPO, artifact_id, ArchiveFormat::Zip)
             .await?;
-        println!(
+        info!(
             "Downloaded artifact ID: {}, bytes length: {}",
             artifact_id,
             bytes.len()
@@ -69,7 +70,7 @@ impl IggyDashboardGithubClient {
         let temp_dir = TempDir::new()?;
         let output_dir = temp_dir.path();
 
-        println!("Unzipping to directory: {:?}", output_dir);
+        info!("Unzipping to directory: {:?}", output_dir);
 
         // Unzip the downloaded bytes into the temporary directory
         let cursor = Cursor::new(bytes);
@@ -103,7 +104,7 @@ impl IggyDashboardGithubClient {
             }
         }
 
-        println!("Artifact unzipped to: {:?}", output_dir);
+        info!("Artifact unzipped to: {:?}", output_dir);
 
         // After unzipping, asynchronously read and filter directory entries
         let mut entries = Vec::new();
@@ -157,7 +158,7 @@ impl IggyDashboardGithubClient {
             .into_iter()
             .collect();
 
-        println!(
+        info!(
             "Found {} successful workflow runs on {branch} branch",
             runs.len(),
         );
