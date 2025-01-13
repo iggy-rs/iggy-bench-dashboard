@@ -27,7 +27,7 @@ pub struct IggyDashboardServerConfig {
     pub cors_origins: String,
 
     /// Rate limit per second per IP
-    #[arg(long, default_value_t = 50)]
+    #[arg(long, default_value_t = 100)]
     pub rate_limit: u32,
 }
 
