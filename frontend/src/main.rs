@@ -4,7 +4,6 @@ mod config;
 mod error;
 mod state;
 mod types;
-mod utils;
 
 use crate::{
     components::{app_content::AppContent, theme_provider::ThemeProvider},

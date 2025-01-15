@@ -11,7 +11,7 @@ pub struct IggyDashboardServerConfig {
     pub host: String,
 
     /// Server port
-    #[arg(long, default_value_t = 8081)]
+    #[arg(long, default_value_t = 8061)]
     pub port: u16,
 
     /// Directory containing performance results
@@ -27,7 +27,7 @@ pub struct IggyDashboardServerConfig {
     pub cors_origins: String,
 
     /// Rate limit per second per IP
-    #[arg(long, default_value_t = 200)]
+    #[arg(long, default_value_t = 500)]
     pub rate_limit: u32,
 }
 

@@ -6,10 +6,10 @@ dist = "dist"
 watch = ["src", "assets"]
 
 [serve]
-port = 8080
+port = 8060
 
 [[proxy]]
-backend = "http://localhost:8081"
+backend = "http://localhost:8061"
 
 [[hooks]]
 stage = "pre_build"

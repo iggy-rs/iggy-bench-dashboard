@@ -10,7 +10,7 @@ extern "C" {
 pub fn get_api_base_url() -> String {
     if cfg!(debug_assertions) {
         // In debug mode, always use localhost
-        return "http://127.0.0.1:8081".to_string();
+        return "http://127.0.0.1:8061".to_string();
     }
 
     // In release mode, try to get from window.API_BASE_URL if it exists
@@ -26,7 +26,7 @@ pub fn get_api_base_url() -> String {
         return api_url;
     }
 
-    // For other hosts in release mode, use the same host with port 8081
+    // For other hosts in release mode, use the same host with port 8061
     if let Ok(location) = window.location().host() {
         if let Some(colon_pos) = location.find(':') {
             return format!("https://{}", location.replace(&location[colon_pos..], ""));

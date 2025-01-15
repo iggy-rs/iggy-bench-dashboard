@@ -1,3 +1,4 @@
+mod cache;
 mod config;
 mod error;
 mod handlers;
@@ -10,8 +11,10 @@ use actix_web::{
     middleware::{Compress, Logger},
     web, App, HttpServer,
 };
+use cache::{BenchmarkCache, CacheWatcher};
 use config::IggyDashboardServerConfig;
 use handlers::AppState;
+use std::sync::Arc;
 use tracing::{error, info};
 use tracing_subscriber::{
     fmt::{self, format::Format},
@@ -48,6 +51,19 @@ async fn main() -> std::io::Result<()> {
     let results_dir = config.results_dir.clone();
     let addr = config.server_addr();
     let cors_origins = config.cors_origins_list();
+
+    // Initialize cache
+    let cache = Arc::new(BenchmarkCache::new(results_dir.clone()));
+    if let Err(e) = cache.load() {
+        error!("Failed to load cache: {}", e);
+        std::process::exit(1);
+    }
+
+    // Initialize file watcher
+    if let Err(e) = CacheWatcher::new(Arc::clone(&cache), results_dir.clone()) {
+        error!("Failed to initialize file watcher: {}", e);
+        std::process::exit(1);
+    }
 
     // Configure rate limiting
     let governor_conf = GovernorConfigBuilder::default()
@@ -94,6 +110,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Governor::new(&governor_conf))
             .app_data(web::Data::new(AppState {
                 results_dir: results_dir.clone(),
+                cache: Arc::clone(&cache),
             }))
             // API routes
             .service(handlers::health_check)
@@ -103,6 +120,7 @@ async fn main() -> std::io::Result<()> {
             .service(handlers::list_benchmarks_with_hardware)
             .service(handlers::get_benchmark_info)
             .service(handlers::get_benchmark_trend)
+            .service(handlers::get_single_benchmark)
             // Serve performance results
             .service(
                 fs::Files::new("/performance_results", &results_dir)

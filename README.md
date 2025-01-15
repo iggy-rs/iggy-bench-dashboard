@@ -87,7 +87,7 @@ The project is organized as a Rust workspace with four main components:
 
    ```bash
    cd server
-   ./target/release/iggy-dashboard-server --host 127.0.0.1 --port 8081
+   ./target/release/iggy-dashboard-server --host 127.0.0.1 --port 8061
    ```
 
 2. Start the collector (optional, for benchmark result collection):
@@ -100,7 +100,7 @@ The project is organized as a Rust workspace with four main components:
    ./target/release/iggy-dashboard-collector --output-dir /path/to/results local-benchmark --directory /path/to/iggy --git-ref main --count 5
    ```
 
-3. Access the dashboard at <http://localhost:8081>
+3. Access the dashboard at <http://localhost:8061>
 
 ### Development Mode
 
@@ -108,7 +108,7 @@ The project is organized as a Rust workspace with four main components:
 
    ```bash
    cd server
-   cargo run  # Will run on port 8081
+   cargo run  # Will run on port 8061
    ```
 
 2. Start the collector (optional, for benchmark result collection):
@@ -133,7 +133,7 @@ The project is organized as a Rust workspace with four main components:
 Note: The development setup uses different ports:
 
 - Frontend development server: port 8080
-- Backend API server: port 8081
+- Backend API server: port 8061
 
 ## Configuration
 
@@ -145,12 +145,14 @@ The server can be configured using command-line arguments:
 iggy-dashboard-server [OPTIONS]
 
 Options:
-    --host <HOST>           Server host [default: 127.0.0.1]
-    --port <PORT>           Server port [default: 8081]
-    --results-dir <DIR>     Results directory [default: ./performance_results]
-    --log-level <LEVEL>     Log level (error|warn|info|debug|trace) [default: info]
-    --cors-origins <URLS>   Allowed CORS origins (comma-separated) [default: *]
-    --rate-limit <LIMIT>    Rate limit per second [default: 50]
+      --host <HOST>                  Server host address [default: 127.0.0.1]
+      --port <PORT>                  Server port [default: 8061]
+      --results-dir <RESULTS_DIR>    Directory containing performance results [default: ./performance_results]
+      --log-level <LOG_LEVEL>        Log level (trace, debug, info, warn, error) [default: info]
+      --cors-origins <CORS_ORIGINS>  Allowed CORS origins (comma-separated) [default: *]
+      --rate-limit <RATE_LIMIT>      Rate limit per second per IP [default: 500]
+  -h, --help                         Print help
+  -V, --version                      Print version
 ```
 
 ### Environment Variables

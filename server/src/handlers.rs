@@ -1,17 +1,19 @@
+use crate::cache::BenchmarkCache;
 use crate::error::IggyDashboardServerError;
 use actix_web::{get, web, HttpRequest, HttpResponse};
 use shared::{
-    BenchmarkData, BenchmarkDataJson, BenchmarkDetails, BenchmarkInfoFromDirectoryName,
+    BenchmarkData, BenchmarkDataJson, BenchmarkInfo, BenchmarkInfoFromDirectoryName,
     BenchmarkTrendData, VersionInfo,
 };
-use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-use tracing::{debug, info};
+use std::sync::Arc;
+use tracing::info;
 
 type Result<T> = std::result::Result<T, IggyDashboardServerError>;
 
 pub struct AppState {
     pub results_dir: PathBuf,
+    pub cache: Arc<BenchmarkCache>,
 }
 
 fn get_client_ip(req: &HttpRequest) -> String {
@@ -54,29 +56,30 @@ pub async fn list_versions(
         hardware, client_ip
     );
 
-    let mut versions = HashSet::new();
+    let benchmarks = data.cache.get_hardware_benchmarks(&hardware);
+    let mut versions = Vec::new();
 
-    for entry in read_dir_entries(&data.results_dir)? {
-        let entry = entry?;
-
-        if is_dir_entry(&entry)? {
-            if let Some(benchmark) =
-                BenchmarkInfoFromDirectoryName::from_dirname(&entry.file_name().to_string_lossy())
-            {
-                if benchmark.hardware == hardware {
-                    versions.insert(benchmark.version);
-                }
+    for path in benchmarks {
+        if let Some(benchmark) = BenchmarkInfoFromDirectoryName::from_dirname(&path) {
+            if let Some(details) = data.cache.get_benchmark(&path) {
+                versions.push((details.params.timestamp, benchmark.version));
             }
         }
     }
 
-    let mut versions: Vec<_> = versions
-        .into_iter()
-        .map(|version| VersionInfo { version, count: 0 })
-        .collect();
-    versions.sort_by(|a, b| b.version.cmp(&a.version));
+    // Sort by timestamp in descending order (newest first)
+    versions.sort_by(|a, b| b.0.cmp(&a.0));
 
-    debug!(
+    // Remove duplicates keeping the first occurrence (newest timestamp)
+    versions.dedup_by(|a, b| a.1 == b.1);
+
+    // Convert to VersionInfo format
+    let versions: Vec<_> = versions
+        .into_iter()
+        .map(|(_, version)| VersionInfo { version, count: 0 })
+        .collect();
+
+    info!(
         "Found {} versions for hardware {} from client {}",
         versions.len(),
         hardware,
@@ -88,47 +91,16 @@ pub async fn list_versions(
 #[get("/api/hardware")]
 pub async fn list_hardware(data: web::Data<AppState>, req: HttpRequest) -> Result<HttpResponse> {
     let client_ip = get_client_ip(&req);
-    info!("Listing hardware for client {}", client_ip);
+    info!("Listing hardware from client {}", client_ip);
 
-    let mut hardware_set = HashSet::new();
-    let mut hardware_details = Vec::new();
-
-    for entry in read_dir_entries(&data.results_dir)? {
-        let entry = entry?;
-
-        if is_dir_entry(&entry)? {
-            if let Some(benchmark) =
-                BenchmarkInfoFromDirectoryName::from_dirname(&entry.file_name().to_string_lossy())
-            {
-                if !hardware_set.contains(&benchmark.hardware) {
-                    // Try to read hardware details from data.json
-                    let data_path = data.results_dir.join(format!(
-                        "{}_{}_{}/data.json",
-                        benchmark.name, benchmark.version, benchmark.hardware
-                    ));
-
-                    if let Ok(content) = std::fs::read_to_string(&data_path) {
-                        if let Ok(output) = serde_json::from_str::<BenchmarkDetails>(&content) {
-                            hardware_details.push(output.hardware);
-                            hardware_set.insert(benchmark.hardware);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Sort by hostname for consistency
-    hardware_details.sort_by(|a, b| a.hostname.cmp(&b.hostname));
-    // Remove duplicates based on hostname
-    hardware_details.dedup_by(|a, b| a.hostname == b.hostname);
+    let hardware_list = data.cache.get_hardware_configurations();
 
     info!(
-        "Found {} unique hardware configurations from client {}",
-        hardware_details.len(),
+        "Found {} hardware configurations from client {}",
+        hardware_list.len(),
         client_ip
     );
-    Ok(HttpResponse::Ok().json(hardware_details))
+    Ok(HttpResponse::Ok().json(hardware_list))
 }
 
 #[get("/api/benchmarks/{version}")]
@@ -144,24 +116,7 @@ pub async fn list_benchmarks(
         version, client_ip
     );
 
-    let mut benchmarks = Vec::new();
-
-    for entry in read_dir_entries(&data.results_dir)? {
-        let entry = entry?;
-
-        if is_dir_entry(&entry)? {
-            if let Some(mut benchmark) =
-                BenchmarkInfoFromDirectoryName::from_dirname(&entry.file_name().to_string_lossy())
-            {
-                if benchmark.version == version {
-                    load_pretty_name(&data.results_dir, &mut benchmark)?;
-                    benchmarks.push(benchmark);
-                }
-            }
-        }
-    }
-
-    benchmarks.sort_by(|a, b| a.name.cmp(&b.name));
+    let benchmarks = data.cache.get_benchmarks_for_version(&version);
 
     info!(
         "Found {} benchmarks for version {} from client {}",
@@ -185,26 +140,11 @@ pub async fn list_benchmarks_with_hardware(
         version, hardware, client_ip
     );
 
-    let mut benchmarks = Vec::new();
+    let benchmarks = data
+        .cache
+        .get_benchmarks_for_version_and_hardware(&version, &hardware);
 
-    for entry in read_dir_entries(&data.results_dir)? {
-        let entry = entry?;
-
-        if is_dir_entry(&entry)? {
-            if let Some(mut benchmark) =
-                BenchmarkInfoFromDirectoryName::from_dirname(&entry.file_name().to_string_lossy())
-            {
-                if benchmark.version == version && benchmark.hardware == hardware {
-                    load_pretty_name(&data.results_dir, &mut benchmark)?;
-                    benchmarks.push(benchmark);
-                }
-            }
-        }
-    }
-
-    benchmarks.sort_by(|a, b| a.name.cmp(&b.name));
-
-    debug!(
+    info!(
         "Found {} benchmarks for version {} and hardware {} from client {}",
         benchmarks.len(),
         version,
@@ -227,19 +167,15 @@ pub async fn get_benchmark_info(
         benchmark_path, client_ip
     );
 
-    let data_path = data.results_dir.join(&benchmark_path).join("data.json");
-    let data_content = std::fs::read_to_string(&data_path).map_err(|_| {
-        IggyDashboardServerError::NotFound(format!("Data file not found for {}", benchmark_path))
+    let details = data.cache.get_benchmark(&benchmark_path).ok_or_else(|| {
+        IggyDashboardServerError::NotFound(format!("Benchmark not found: {}", benchmark_path))
     })?;
-
-    let benchmark_info: BenchmarkDetails = serde_json::from_str(&data_content)
-        .map_err(|e| IggyDashboardServerError::InvalidJson(e.to_string()))?;
 
     info!(
         "Found benchmark info for {} from client {}",
         benchmark_path, client_ip
     );
-    Ok(HttpResponse::Ok().json(benchmark_info))
+    Ok(HttpResponse::Ok().json(details))
 }
 
 #[get("/api/trend/{benchmark}/{hardware}")]
@@ -271,53 +207,76 @@ pub async fn get_benchmark_trend(
                 let data_path = entry.path().join("data.json");
                 if let Ok(data) = std::fs::read_to_string(&data_path) {
                     if let Ok(data_json) = serde_json::from_str::<BenchmarkDataJson>(&data) {
-                        trend_data.push(BenchmarkTrendData {
-                            version: benchmark_info.version.clone(),
-                            data: BenchmarkData {
-                                latency_avg: data_json.summary.average_avg_latency_ms,
-                                latency_p50: data_json.summary.average_p50_latency_ms,
-                                latency_p95: data_json.summary.average_p95_latency_ms,
-                                latency_p99: data_json.summary.average_p99_latency_ms,
-                                latency_p999: data_json.summary.average_p999_latency_ms,
-                                throughput_mb: data_json
-                                    .summary
-                                    .average_throughput_megabytes_per_second,
-                                throughput_msgs: data_json
-                                    .summary
-                                    .average_throughput_messages_per_second,
+                        trend_data.push((
+                            data_json.params.timestamp,
+                            BenchmarkTrendData {
+                                version: benchmark_info.version.clone(),
+                                data: BenchmarkData {
+                                    latency_avg: data_json.summary.average_avg_latency_ms,
+                                    latency_p50: data_json.summary.average_p50_latency_ms,
+                                    latency_p95: data_json.summary.average_p95_latency_ms,
+                                    latency_p99: data_json.summary.average_p99_latency_ms,
+                                    latency_p999: data_json.summary.average_p999_latency_ms,
+                                    throughput_mb: data_json
+                                        .summary
+                                        .average_throughput_megabytes_per_second,
+                                    throughput_msgs: data_json
+                                        .summary
+                                        .average_throughput_messages_per_second,
+                                },
                             },
-                        });
+                        ));
                     }
                 }
             }
         }
     }
 
-    // Sort by version
-    trend_data.sort_by(|a, b| a.version.cmp(&b.version));
+    // Sort by timestamp
+    trend_data.sort_by(|a, b| a.0.cmp(&b.0));
 
-    Ok(HttpResponse::Ok().json(trend_data))
+    // Return only the BenchmarkTrendData part
+    Ok(HttpResponse::Ok().json(
+        trend_data
+            .into_iter()
+            .map(|(_, data)| data)
+            .collect::<Vec<_>>(),
+    ))
 }
 
-fn load_pretty_name(
-    results_dir: &Path,
-    benchmark: &mut BenchmarkInfoFromDirectoryName,
-) -> Result<()> {
-    let data_path = results_dir.join(format!(
-        "{}_{}_{}/data.json",
-        benchmark.name, benchmark.version, benchmark.hardware
-    ));
+#[get("/api/single/{benchmark_path}")]
+pub async fn get_single_benchmark(
+    data: web::Data<AppState>,
+    benchmark_path: web::Path<String>,
+    req: HttpRequest,
+) -> Result<HttpResponse> {
+    let client_ip = get_client_ip(&req);
+    let benchmark_path = benchmark_path.into_inner();
 
-    if let Ok(content) = std::fs::read_to_string(&data_path) {
-        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
-            if let Some(params) = json.get("params") {
-                if let Some(pretty_name) = params.get("pretty_name") {
-                    if let Some(pretty_name) = pretty_name.as_str() {
-                        benchmark.pretty_name = Some(pretty_name.to_string());
-                    }
-                }
-            }
-        }
+    info!(
+        "Getting single benchmark {} from client {}",
+        benchmark_path, client_ip
+    );
+
+    let path = data.results_dir.join(&benchmark_path);
+
+    if !path.exists() {
+        return Err(IggyDashboardServerError::NotFound(format!(
+            "Benchmark {} not found",
+            benchmark_path
+        )));
     }
-    Ok(())
+
+    let benchmark_info = load_benchmark_info(&path)?;
+    Ok(HttpResponse::Ok().json(benchmark_info))
+}
+
+fn load_benchmark_info(path: &Path) -> Result<BenchmarkInfo> {
+    let data_path = path.join("data.json");
+    let data_content = std::fs::read_to_string(&data_path).map_err(|_| {
+        IggyDashboardServerError::NotFound(format!("Data file not found for {}", path.display()))
+    })?;
+
+    serde_json::from_str(&data_content)
+        .map_err(|e| IggyDashboardServerError::InvalidJson(e.to_string()))
 }

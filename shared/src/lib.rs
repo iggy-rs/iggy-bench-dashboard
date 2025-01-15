@@ -14,7 +14,18 @@ pub struct BenchmarkInfoFromDirectoryName {
     pub pretty_name: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq, Deserialize, Default)]
+pub struct BenchmarkInfo {
+    pub params: BenchmarkParams,
+    pub hardware: BenchmarkHardware,
+    pub summary: Option<BenchmarkSummary>,
+    pub first_producer_summary: Option<BenchmarkActorSummary>,
+    pub first_consumer_summary: Option<BenchmarkActorSummary>,
+    pub first_producer_raw_data: Option<Vec<BenchmarkRecord>>,
+    pub first_consumer_raw_data: Option<Vec<BenchmarkRecord>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Default)]
 pub struct BenchmarkHardware {
     pub cpu_name: String,
     pub cpu_cores: u32,
@@ -25,7 +36,7 @@ pub struct BenchmarkHardware {
     pub os_version: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Default)]
 pub struct BenchmarkParams {
     pub timestamp: String,
     pub benchmark_kind: String,
@@ -66,8 +77,26 @@ pub struct BenchmarkSummary {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct BenchmarkActorSummary {
+    pub total_time_secs: f64,
+    pub total_user_data_bytes: u64,
+    pub total_bytes: u64,
+    pub total_messages: u64,
+    pub throughput_megabytes_per_second: f64,
+    pub throughput_messages_per_second: f64,
+    pub p50_latency_ms: f64,
+    pub p90_latency_ms: f64,
+    pub p95_latency_ms: f64,
+    pub p99_latency_ms: f64,
+    pub p999_latency_ms: f64,
+    pub avg_latency_ms: f64,
+    pub median_latency_ms: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct BenchmarkDataJson {
     pub summary: BenchmarkSummary,
+    pub params: BenchmarkParams,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -79,6 +108,16 @@ pub struct BenchmarkData {
     pub latency_p999: f64,
     pub throughput_mb: f64,
     pub throughput_msgs: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BenchmarkRecord {
+    pub elapsed_time_us: u64,
+    pub latency_us: u64,
+    pub messages: u64,
+    pub message_batches: u64,
+    pub user_data_bytes: u64,
+    pub total_bytes: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

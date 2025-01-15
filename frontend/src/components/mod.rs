@@ -6,6 +6,8 @@ pub mod gitref_selector;
 pub mod hardware_selector;
 pub mod layout;
 pub mod measurements;
+pub mod plot;
+pub mod single_chart;
 pub mod theme_provider;
 pub mod theme_toggle;
 pub mod trend_chart;
