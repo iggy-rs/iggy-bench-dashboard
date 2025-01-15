@@ -184,7 +184,7 @@ impl BenchmarkCache {
 }
 
 pub struct CacheWatcher {
-    watcher: RecommendedWatcher,
+    _watcher: RecommendedWatcher,
     _cache: Arc<BenchmarkCache>,
 }
 
@@ -242,7 +242,7 @@ impl CacheWatcher {
         watcher.watch(&results_dir, RecursiveMode::Recursive)?;
 
         Ok(Self {
-            watcher,
+            _watcher: watcher,
             _cache: cache,
         })
     }

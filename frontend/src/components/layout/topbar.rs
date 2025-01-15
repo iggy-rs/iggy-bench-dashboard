@@ -3,6 +3,7 @@ use crate::components::benchmark_info_tooltip::BenchmarkInfoTooltip;
 use crate::components::theme_toggle::ThemeToggle;
 use crate::state::benchmark::use_benchmark;
 use crate::state::hardware::use_hardware;
+use crate::state::view_mode::use_view_mode;
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
@@ -18,6 +19,7 @@ pub struct TopBarProps {
 pub fn topbar(props: &TopBarProps) -> Html {
     let hardware_ctx = use_hardware();
     let benchmark_ctx = use_benchmark();
+    let view_mode_ctx = use_view_mode();
 
     html! {
         <div class="top-buttons">
@@ -56,6 +58,7 @@ pub fn topbar(props: &TopBarProps) -> Html {
                                                     <BenchmarkInfoTooltip
                                                         benchmark_info={benchmark_ctx.state.benchmark_info.clone()}
                                                         visible={true}
+                                                        view_mode={view_mode_ctx.mode.clone()}
                                                     />
                                                 }
                                             } else {

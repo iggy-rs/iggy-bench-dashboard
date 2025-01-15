@@ -42,6 +42,8 @@ pub struct BenchmarkParams {
     pub benchmark_kind: String,
     pub transport: String,
     pub pretty_name: String,
+    pub git_ref: String,
+    pub git_ref_date: String,
     pub messages_per_batch: u32,
     pub message_batches: u32,
     pub message_size: u32,
@@ -52,7 +54,6 @@ pub struct BenchmarkParams {
     pub number_of_consumer_groups: u32,
     pub disable_parallel_consumers: bool,
     pub disable_parallel_producers: bool,
-    pub git_ref: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]

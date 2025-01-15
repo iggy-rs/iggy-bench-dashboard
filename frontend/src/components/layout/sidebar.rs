@@ -1,9 +1,8 @@
 use crate::components::{
-    benchmark_result::BenchmarkResult, gitref_selector::Gitref,
+    benchmark_selector::BenchmarkSelector, gitref_selector::Gitref,
     hardware_selector::HardwareSelector, measurements::Measurements,
     view_mode_toggle::ViewModeToggle,
 };
-use crate::state::benchmark::{use_benchmark, BenchmarkAction};
 use crate::state::gitref::use_version;
 use crate::state::view_mode::{use_view_mode, ViewMode};
 use crate::types::MeasurementType;
@@ -18,7 +17,6 @@ pub struct SidebarProps {
 
 #[function_component(Sidebar)]
 pub fn sidebar(props: &SidebarProps) -> Html {
-    let benchmark_ctx = use_benchmark();
     let version_ctx = use_version();
     let view_mode_ctx = use_view_mode();
     let is_trend_view = matches!(view_mode_ctx.mode, ViewMode::VersionTrend);
@@ -42,73 +40,13 @@ pub fn sidebar(props: &SidebarProps) -> Html {
             }
 
             <h3>{"Benchmarks"}</h3>
-            <div class="benchmark-categories">
-                <div class="benchmark-category">
-                    <h4>{"Send"}</h4>
-                    <div class="benchmark-list">
-                        {benchmark_ctx.state.benchmarks.iter()
-                            .filter(|benchmark| benchmark.name.starts_with("send"))
-                            .map(|benchmark| {
-                                let selected = benchmark_ctx.state.selected_benchmark
-                                    .as_ref()
-                                    .map(|selected| selected == &benchmark.name)
-                                    .unwrap_or(false);
-                                html! {
-                                    <BenchmarkResult
-                                        kind={benchmark.name.to_string()}
-                                        pretty_name={benchmark.pretty_name.clone()}
-                                        selected={selected}
-                                        on_select={
-                                            let dispatch = benchmark_ctx.dispatch.clone();
-                                            Callback::from(move |name| {
-                                                dispatch.emit(BenchmarkAction::SelectBenchmark(name));
-                                            })
-                                        }
-                                    />
-                                }
-                            }).collect::<Html>()}
-                    </div>
-                </div>
-
-                <div class="benchmark-category">
-                    <h4>{"Poll"}</h4>
-                    <div class="benchmark-list">
-                        {benchmark_ctx.state.benchmarks.iter()
-                            .filter(|benchmark| benchmark.name.starts_with("poll"))
-                            .map(|benchmark| {
-                                let selected = benchmark_ctx.state.selected_benchmark
-                                    .as_ref()
-                                    .map(|selected| selected == &benchmark.name)
-                                    .unwrap_or(false);
-                                html! {
-                                    <BenchmarkResult
-                                        kind={benchmark.name.to_string()}
-                                        pretty_name={benchmark.pretty_name.clone()}
-                                        selected={selected}
-                                        on_select={
-                                            let dispatch = benchmark_ctx.dispatch.clone();
-                                            Callback::from(move |name| {
-                                                dispatch.emit(BenchmarkAction::SelectBenchmark(name));
-                                            })
-                                        }
-                                    />
-                                }
-                            }).collect::<Html>()}
-                    </div>
-                </div>
-            </div>
+            <BenchmarkSelector />
 
             <div class="file-list">
-                {if benchmark_ctx.state.selected_benchmark.is_some() {
-                    html! {
-                        <Measurements
-                            selected_file={props.selected_file.clone()}
-                            on_file_select={props.on_file_select.clone()}
-                        />
-                    }
-                } else {
-                    html! {}
-                }}
+                <Measurements
+                    selected_file={props.selected_file.clone()}
+                    on_file_select={props.on_file_select.clone()}
+                />
             </div>
         </div>
     }

@@ -1,6 +1,7 @@
 use crate::cache::BenchmarkCache;
 use crate::error::IggyDashboardServerError;
 use actix_web::{get, web, HttpRequest, HttpResponse};
+use chrono::DateTime;
 use shared::{
     BenchmarkData, BenchmarkDataJson, BenchmarkInfo, BenchmarkInfoFromDirectoryName,
     BenchmarkTrendData, VersionInfo,
@@ -62,15 +63,19 @@ pub async fn list_versions(
     for path in benchmarks {
         if let Some(benchmark) = BenchmarkInfoFromDirectoryName::from_dirname(&path) {
             if let Some(details) = data.cache.get_benchmark(&path) {
-                versions.push((details.params.timestamp, benchmark.version));
+                if let Ok(date) =
+                    DateTime::parse_from_str(&details.params.git_ref_date, "%Y-%m-%dT%H:%M:%S%z")
+                {
+                    versions.push((date, benchmark.version));
+                }
             }
         }
     }
 
-    // Sort by timestamp in descending order (newest first)
+    // Sort by git_ref_date in descending order (newest first)
     versions.sort_by(|a, b| b.0.cmp(&a.0));
 
-    // Remove duplicates keeping the first occurrence (newest timestamp)
+    // Remove duplicates keeping the first occurrence (newest git_ref_date)
     versions.dedup_by(|a, b| a.1 == b.1);
 
     // Convert to VersionInfo format

@@ -1,3 +1,4 @@
+use crate::state::view_mode::ViewMode;
 use shared::BenchmarkDetails;
 use yew::prelude::*;
 
@@ -5,6 +6,7 @@ use yew::prelude::*;
 pub struct BenchmarkInfoTooltipProps {
     pub benchmark_info: Option<BenchmarkDetails>,
     pub visible: bool,
+    pub view_mode: ViewMode,
 }
 
 #[function_component(BenchmarkInfoTooltip)]
@@ -16,6 +18,7 @@ pub fn benchmark_info_tooltip(props: &BenchmarkInfoTooltipProps) -> Html {
     let benchmark_info = props.benchmark_info.as_ref().unwrap();
     let hardware = &benchmark_info.hardware;
     let params = &benchmark_info.params;
+    let is_trend_view = matches!(props.view_mode, ViewMode::VersionTrend);
 
     html! {
         <div class="benchmark-info-tooltip">
@@ -49,7 +52,16 @@ pub fn benchmark_info_tooltip(props: &BenchmarkInfoTooltipProps) -> Html {
                         params.streams,
                         params.partitions
                     )}</p>
-                    <p><strong>{"Git ref: "}</strong>{&params.git_ref}</p>
+                    {if !is_trend_view {
+                        html! {
+                            <>
+                                <p><strong>{"Git ref: "}</strong>{&params.git_ref}</p>
+                                <p><strong>{"Git ref date: "}</strong>{&params.git_ref_date}</p>
+                            </>
+                        }
+                    } else {
+                        html! {}
+                    }}
                 </div>
             </div>
         </div>

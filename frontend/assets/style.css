@@ -94,7 +94,7 @@ body {
 }
 
 .file-list {
-    margin-top: 0;
+    margin-top: 16px;
 }
 
 .file {
@@ -146,15 +146,31 @@ h3 {
     width: 100%;
     padding: 8px;
     border-radius: 4px;
-    border: 1px solid #ddd;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     background-color: white;
+    color: #333;
     font-size: 14px;
-    margin-top: 8px;
+    margin: 8px 0 16px 0;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+    padding-right: 32px;
 }
 
 .version-select select:focus {
     outline: none;
-    border-color: #2196f3;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.version-select select option {
+    background-color: white;
+    color: #333;
+    padding: 8px;
 }
 
 .hardware-select {
@@ -170,10 +186,32 @@ h3 {
 .hardware-select select {
     width: 100%;
     padding: 8px;
-    border: 1px solid #ddd;
     border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     background-color: white;
+    color: #333;
     font-size: 14px;
+    margin: 8px 0 16px 0;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+    padding-right: 32px;
+}
+
+.hardware-select select:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.hardware-select select option {
+    background-color: white;
+    color: #333;
+    padding: 8px;
 }
 
 .version-select,
@@ -189,6 +227,30 @@ h3 {
     border: 1px solid #ddd;
     background-color: white;
     font-size: 14px;
+    color: #333;
+    margin: 8px 0 16px 0;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+    padding-right: 32px;
+}
+
+.version-select select:focus,
+.hardware-select select:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.version-select select option,
+.hardware-select select option {
+    background-color: white;
+    color: #333;
+    padding: 8px;
 }
 
 .data-download {
@@ -557,6 +619,35 @@ body.dark .segment.active {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+/* Benchmark Selector */
+.benchmark-selector {
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+.benchmark-selector select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background-color: white;
+    font-size: 14px;
+    margin-top: 8px;
+    color: #333;
+    font-family: inherit;
+}
+
+.dark .benchmark-selector select {
+    background-color: #2a2a2a;
+    border-color: #444;
+    color: #fff;
+}
+
+.dark .benchmark-selector select option {
+    background-color: #2a2a2a;
+    color: #fff;
+}
+
 /* Dark mode styles */
 body.dark {
     background-color: #1a1a1a;
@@ -611,9 +702,9 @@ body.dark .file.selected {
 
 body.dark .version-select select,
 body.dark .hardware-select select {
-    background-color: #2d2d2d;
-    border-color: #404040;
-    color: #ffffff;
+    background-color: #2a2a2a;
+    border-color: #444;
+    color: #fff;
 }
 
 body.dark .placeholder {

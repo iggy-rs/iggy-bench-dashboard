@@ -35,7 +35,7 @@ fn use_init_hardware(hardware_ctx: HardwareContext) {
                         dispatch.emit(HardwareAction::SetHardwareList(hardware.clone()));
                         let default_hardware = hardware
                             .iter()
-                            .find(|h| h.hostname == "atlas2")
+                            .find(|h| h.hostname == "elitebook")
                             .unwrap_or(&hardware[0]);
                         dispatch.emit(HardwareAction::SelectHardware(
                             default_hardware.hostname.clone(),
