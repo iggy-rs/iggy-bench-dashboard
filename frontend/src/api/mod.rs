@@ -2,7 +2,7 @@ use crate::config::get_api_base_url;
 use crate::error::{IggyDashboardError, Result};
 use gloo::console::log;
 use gloo::net::http::Request;
-use shared::{BenchmarkDetails, BenchmarkHardware, BenchmarkInfoFromDirectoryName, VersionInfo};
+use shared::{BenchmarkDetails, BenchmarkHardware, BenchmarkInfoFromDirectoryName};
 use std::sync::atomic::{AtomicBool, Ordering};
 
 static HEALTH_CHECK_DONE: AtomicBool = AtomicBool::new(false);
@@ -104,12 +104,11 @@ pub async fn fetch_versions_for_hardware(hardware: &str) -> Result<Vec<String>> 
         return Err(IggyDashboardError::Server(resp.status().to_string()));
     }
 
-    let version_info: Vec<VersionInfo> = resp
+    let versions: Vec<String> = resp
         .json()
         .await
         .map_err(|e| IggyDashboardError::Parse(e.to_string()))?;
 
-    let versions: Vec<_> = version_info.into_iter().map(|info| info.version).collect();
     log!(format!(
         "Found versions for hardware {}: {:?}",
         hardware, versions

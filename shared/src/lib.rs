@@ -1,12 +1,6 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct VersionInfo {
-    pub version: String,
-    pub count: usize,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct BenchmarkInfoFromDirectoryName {
     pub name: String,
     pub version: String,
@@ -132,7 +126,8 @@ impl BenchmarkInfoFromDirectoryName {
         let parts: Vec<&str> = dirname.split('_').collect();
         if parts.len() >= 2 {
             if let Some(version) = parts.get(parts.len() - 2) {
-                if version.len() == 8 || version.contains('.') {
+                // Accept either 8-char commit hashes or any version containing dots or hyphens
+                if version.len() == 8 || version.contains('.') || version.contains('-') {
                     if let Some(hardware) = parts.last() {
                         let name = parts[..parts.len() - 2].join("_");
                         return Some(BenchmarkInfoFromDirectoryName {

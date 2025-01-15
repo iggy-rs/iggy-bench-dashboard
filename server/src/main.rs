@@ -23,6 +23,12 @@ use tracing_subscriber::{
     EnvFilter,
 };
 
+#[derive(Clone)]
+struct ServerState {
+    cache: Arc<BenchmarkCache>,
+    _watcher: Arc<CacheWatcher>,
+}
+
 async fn index() -> actix_web::Result<NamedFile> {
     Ok(NamedFile::open("frontend/dist/index.html")?)
 }
@@ -60,10 +66,18 @@ async fn main() -> std::io::Result<()> {
     }
 
     // Initialize file watcher
-    if let Err(e) = CacheWatcher::new(Arc::clone(&cache), results_dir.clone()) {
-        error!("Failed to initialize file watcher: {}", e);
-        std::process::exit(1);
-    }
+    let watcher = match CacheWatcher::new(Arc::clone(&cache), results_dir.clone()) {
+        Ok(w) => Arc::new(w),
+        Err(e) => {
+            error!("Failed to initialize file watcher: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    let state = ServerState {
+        cache: Arc::clone(&cache),
+        _watcher: Arc::clone(&watcher),
+    };
 
     // Configure rate limiting
     let governor_conf = GovernorConfigBuilder::default()
@@ -79,6 +93,8 @@ async fn main() -> std::io::Result<()> {
     info!("Rate limit: {} requests per second", config.rate_limit);
 
     HttpServer::new(move || {
+        let state = state.clone();
+
         // CORS configuration
         let cors = if cors_origins.contains(&"*".to_string()) {
             Cors::default()
@@ -110,7 +126,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Governor::new(&governor_conf))
             .app_data(web::Data::new(AppState {
                 results_dir: results_dir.clone(),
-                cache: Arc::clone(&cache),
+                cache: Arc::clone(&state.cache),
             }))
             // API routes
             .service(handlers::health_check)

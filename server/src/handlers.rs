@@ -4,7 +4,7 @@ use actix_web::{get, web, HttpRequest, HttpResponse};
 use chrono::DateTime;
 use shared::{
     BenchmarkData, BenchmarkDataJson, BenchmarkInfo, BenchmarkInfoFromDirectoryName,
-    BenchmarkTrendData, VersionInfo,
+    BenchmarkTrendData,
 };
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -59,30 +59,43 @@ pub async fn list_versions(
 
     let benchmarks = data.cache.get_hardware_benchmarks(&hardware);
     let mut versions = Vec::new();
+    let mut seen_versions = std::collections::HashSet::new();
 
     for path in benchmarks {
         if let Some(benchmark) = BenchmarkInfoFromDirectoryName::from_dirname(&path) {
             if let Some(details) = data.cache.get_benchmark(&path) {
-                if let Ok(date) =
-                    DateTime::parse_from_str(&details.params.git_ref_date, "%Y-%m-%dT%H:%M:%S%z")
-                {
-                    versions.push((date, benchmark.version));
+                info!(
+                    "Processing benchmark path: {}, version: {}, git_ref_date: {}",
+                    path, benchmark.version, details.params.git_ref_date
+                );
+
+                // Only add version if we haven't seen it before
+                if seen_versions.insert(benchmark.version.clone()) {
+                    versions.push((
+                        DateTime::parse_from_str(
+                            &details.params.git_ref_date,
+                            "%Y-%m-%dT%H:%M:%S%z",
+                        )
+                        .unwrap_or_else(|_| {
+                            DateTime::parse_from_str(
+                                "1970-01-01T00:00:00+0000",
+                                "%Y-%m-%dT%H:%M:%S%z",
+                            )
+                            .unwrap()
+                        }),
+                        benchmark.version,
+                    ));
                 }
             }
         }
     }
 
-    // Sort by git_ref_date in descending order (newest first)
     versions.sort_by(|a, b| b.0.cmp(&a.0));
 
-    // Remove duplicates keeping the first occurrence (newest git_ref_date)
-    versions.dedup_by(|a, b| a.1 == b.1);
-
-    // Convert to VersionInfo format
-    let versions: Vec<_> = versions
+    let versions = versions
         .into_iter()
-        .map(|(_, version)| VersionInfo { version, count: 0 })
-        .collect();
+        .map(|(_, version)| version)
+        .collect::<Vec<String>>();
 
     info!(
         "Found {} versions for hardware {} from client {}",

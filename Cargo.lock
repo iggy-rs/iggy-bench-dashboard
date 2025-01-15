@@ -1964,6 +1964,7 @@ dependencies = [
  "shared",
  "thiserror 2.0.11",
  "time",
+ "tokio",
  "tracing",
  "tracing-subscriber",
 ]
