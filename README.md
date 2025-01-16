@@ -119,7 +119,7 @@ Access the development version at <http://localhost:8060>
 ### Building the Image
 
 ```bash
-docker build -t iggy-benchmarks-dashboard .
+docker build -t iggyrs/iggy-benchmarks-dashboard .
 ```
 
 ### Running the Container
@@ -137,7 +137,7 @@ Basic usage (recommended):
   docker run -p 8061:8061 \
      -v "$(pwd)/performance_results:/data/performance_results" \
      --user "$(id -u):$(id -g)" \
-     iggy-benchmarks-dashboard
+     iggyrs/iggy-benchmarks-dashboard
   ```
 
 With custom configuration:
@@ -149,7 +149,7 @@ With custom configuration:
         -e HOST=0.0.0.0 \
         -e PORT=8061 \
         -e RESULTS_DIR=/data/performance_results \
-        iggy-benchmarks-dashboard
+        iggyrs/iggy-benchmarks-dashboard
   ```
 
 Using a named volume:
@@ -161,7 +161,7 @@ Using a named volume:
   # Run with named volume
   docker run -p 8061:8061 \
      -v iggy-results:/data/performance_results \
-     iggy-benchmarks-dashboard
+     iggyrs/iggy-benchmarks-dashboard
   ```
 
 ## Configuration
