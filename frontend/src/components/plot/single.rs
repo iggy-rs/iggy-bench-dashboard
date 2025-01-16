@@ -219,7 +219,7 @@ fn plot_throughput_over_time(
                 .bottom("5%")
                 .selected_mode(LegendSelectedMode::Multiple),
         )
-        .grid(Grid::new().left("5%").right("5%").top("15%").bottom("10%"))
+        .grid(Grid::new().left("12%").right("8%").top("15%").bottom("10%"))
         .toolbox(
             Toolbox::new().feature(
                 Feature::new()
@@ -252,7 +252,7 @@ fn plot_throughput_over_time(
         .y_axis(
             Axis::new()
                 .type_(AxisType::Value)
-                .name("Messages per Second")
+                .name("Msg/s")
                 .name_location(NameLocation::End)
                 .name_gap(15)
                 .name_rotation(0)
@@ -342,7 +342,7 @@ fn plot_latency_over_time(
                 .bottom("5%")
                 .selected_mode(LegendSelectedMode::Multiple),
         )
-        .grid(Grid::new().left("5%").right("5%").top("15%").bottom("10%"))
+        .grid(Grid::new().left("12%").right("8%").top("15%").bottom("10%"))
         .toolbox(
             Toolbox::new().feature(
                 Feature::new()
@@ -467,7 +467,7 @@ fn plot_throughput_mb_over_time(
                 .bottom("5%")
                 .selected_mode(LegendSelectedMode::Multiple),
         )
-        .grid(Grid::new().left("5%").right("5%").top("15%").bottom("10%"))
+        .grid(Grid::new().left("12%").right("8%").top("15%").bottom("10%"))
         .toolbox(
             Toolbox::new().feature(
                 Feature::new()
@@ -500,7 +500,7 @@ fn plot_throughput_mb_over_time(
         .y_axis(
             Axis::new()
                 .type_(AxisType::Value)
-                .name("Megabytes per Second")
+                .name("Msg/s")
                 .name_location(NameLocation::End)
                 .name_gap(15)
                 .name_rotation(0)

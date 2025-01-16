@@ -3,7 +3,10 @@ use charming::{
         Axis, DataView, Feature, Grid, Legend, LegendSelectedMode, Restore, SaveAsImage, Title,
         Toolbox, ToolboxDataZoom,
     },
-    element::{AxisType, ItemStyle, LineStyle, NameLocation, Symbol, TextStyle, Tooltip, Trigger},
+    element::{
+        AxisType, ItemStyle, LineStyle, NameLocation, SplitLine, Symbol, TextStyle, Tooltip,
+        Trigger,
+    },
     series::Line,
     theme::Theme,
     Chart, Echarts, WasmRenderer,
@@ -42,10 +45,12 @@ fn create_latency_chart(plot_data: &TrendPlotData, is_dark: bool) -> Chart {
         .background_color(if is_dark { "#242424" } else { "#ffffff" })
         .title(
             Title::new()
-                .text("Latency Trend")
-                .left("center")
-                .top(10)
-                .text_style(TextStyle::new().font_size(20).font_weight("bold")),
+                .text("Latency Trend".to_string())
+                .text_align(charming::element::TextAlign::Center)
+                .text_style(TextStyle::new().font_size(20).font_weight("bold"))
+                .padding(25)
+                .left("50%")
+                .top("5%"),
         )
         .tooltip(Tooltip::new().trigger(Trigger::Axis))
         .legend(
@@ -59,7 +64,7 @@ fn create_latency_chart(plot_data: &TrendPlotData, is_dark: bool) -> Chart {
                 ])
                 .selected_mode(LegendSelectedMode::Multiple),
         )
-        .grid(Grid::new().left("5%").right("5%").top("15%").bottom("15%"))
+        .grid(Grid::new().left("12%").right("8%").top("15%").bottom("10%"))
         .toolbox(
             Toolbox::new().feature(
                 Feature::new()
@@ -80,9 +85,13 @@ fn create_latency_chart(plot_data: &TrendPlotData, is_dark: bool) -> Chart {
         .y_axis(
             Axis::new()
                 .type_(AxisType::Value)
-                .name("Latency (ms)")
-                .name_location(NameLocation::Center)
-                .name_gap(45),
+                .name("Latency")
+                .name_location(NameLocation::End)
+                .name_gap(15)
+                .name_rotation(0)
+                .position("left")
+                .axis_label(charming::element::AxisLabel::new().formatter("{value} ms"))
+                .split_line(SplitLine::new().show(true)),
         )
         .series(
             Line::new()
@@ -133,10 +142,12 @@ fn create_throughput_chart(plot_data: &TrendPlotData, is_dark: bool) -> Chart {
         .background_color(if is_dark { "#242424" } else { "#ffffff" })
         .title(
             Title::new()
-                .text("Throughput (Messages/s)")
-                .left("center")
-                .top(10)
-                .text_style(TextStyle::new().font_size(20).font_weight("bold")),
+                .text("Throughput (Messages/s)".to_string())
+                .text_align(charming::element::TextAlign::Center)
+                .text_style(TextStyle::new().font_size(20).font_weight("bold"))
+                .padding(25)
+                .left("50%")
+                .top("5%"),
         )
         .tooltip(Tooltip::new().trigger(Trigger::Axis))
         .legend(
@@ -145,7 +156,7 @@ fn create_throughput_chart(plot_data: &TrendPlotData, is_dark: bool) -> Chart {
                 .data(vec!["Producer Throughput", "Consumer Throughput"])
                 .selected_mode(LegendSelectedMode::Multiple),
         )
-        .grid(Grid::new().left("5%").right("5%").top("15%").bottom("15%"))
+        .grid(Grid::new().left("12%").right("8%").top("15%").bottom("10%"))
         .toolbox(
             Toolbox::new().feature(
                 Feature::new()
@@ -166,9 +177,13 @@ fn create_throughput_chart(plot_data: &TrendPlotData, is_dark: bool) -> Chart {
         .y_axis(
             Axis::new()
                 .type_(AxisType::Value)
-                .name("Messages per second")
-                .name_location(NameLocation::Center)
-                .name_gap(45),
+                .name("Msg/s")
+                .name_location(NameLocation::End)
+                .name_gap(15)
+                .name_rotation(0)
+                .position("left")
+                .axis_label(charming::element::AxisLabel::new().formatter("{value} msg/s"))
+                .split_line(SplitLine::new().show(true)),
         )
         .series(
             Line::new()
@@ -191,10 +206,12 @@ fn create_throughput_mb_chart(plot_data: &TrendPlotData, is_dark: bool) -> Chart
         .background_color(if is_dark { "#242424" } else { "#ffffff" })
         .title(
             Title::new()
-                .text("Throughput (MB/s)")
-                .left("center")
-                .top(10)
-                .text_style(TextStyle::new().font_size(20).font_weight("bold")),
+                .text("Throughput (MB/s)".to_string())
+                .text_align(charming::element::TextAlign::Center)
+                .text_style(TextStyle::new().font_size(20).font_weight("bold"))
+                .padding(25)
+                .left("50%")
+                .top("5%"),
         )
         .tooltip(Tooltip::new().trigger(Trigger::Axis))
         .legend(
@@ -203,7 +220,7 @@ fn create_throughput_mb_chart(plot_data: &TrendPlotData, is_dark: bool) -> Chart
                 .data(vec!["Producer Throughput", "Consumer Throughput"])
                 .selected_mode(LegendSelectedMode::Multiple),
         )
-        .grid(Grid::new().left("5%").right("5%").top("15%").bottom("15%"))
+        .grid(Grid::new().left("12%").right("8%").top("15%").bottom("10%"))
         .toolbox(
             Toolbox::new().feature(
                 Feature::new()
@@ -224,9 +241,13 @@ fn create_throughput_mb_chart(plot_data: &TrendPlotData, is_dark: bool) -> Chart
         .y_axis(
             Axis::new()
                 .type_(AxisType::Value)
-                .name("Megabytes per second")
-                .name_location(NameLocation::Center)
-                .name_gap(45),
+                .name("MB/s")
+                .name_location(NameLocation::End)
+                .name_gap(15)
+                .name_rotation(0)
+                .position("left")
+                .axis_label(charming::element::AxisLabel::new().formatter("{value} MB/s"))
+                .split_line(SplitLine::new().show(true)),
         )
         .series(
             Line::new()

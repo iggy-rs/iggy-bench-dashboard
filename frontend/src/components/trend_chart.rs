@@ -116,6 +116,6 @@ pub fn trend_chart(props: &TrendChartProps) -> Html {
     }
 
     html! {
-        <div ref={chart_node} id="trend-chart" style="width: 100%; height: 100%;"></div>
+        <div ref={chart_node} id="trend-chart" style="width: calc(100% - 40px); height: calc(100% - 20px); margin: 10px 20px;"></div>
     }
 }

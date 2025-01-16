@@ -1848,7 +1848,7 @@ dependencies = [
 
 [[package]]
 name = "iggy-benchmarks-dashboard-collector"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "anyhow",
  "clap",
@@ -1864,7 +1864,7 @@ dependencies = [
 
 [[package]]
 name = "iggy-benchmarks-dashboard-frontend"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "charming",
  "gloo 0.11.0",
@@ -1880,7 +1880,7 @@ dependencies = [
 
 [[package]]
 name = "iggy-benchmarks-dashboard-server"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "actix-cors",
  "actix-files",
@@ -3013,7 +3013,7 @@ dependencies = [
 
 [[package]]
 name = "shared"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "serde",
 ]

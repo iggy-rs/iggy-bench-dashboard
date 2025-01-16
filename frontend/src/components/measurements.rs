@@ -33,7 +33,7 @@ pub fn measurements(props: &MeasurementsProps) -> Html {
                 onclick={let on_file_select = on_file_select.clone();
                     move |_| on_file_select.emit(MeasurementType::Throughput)}
             >
-                { "Throughput" }
+                { "Throughput Messages/s" }
             </button>
             <button
                 class={classes!(
@@ -42,7 +42,7 @@ pub fn measurements(props: &MeasurementsProps) -> Html {
                 )}
                 onclick={move |_| on_file_select.emit(MeasurementType::ThroughputMb)}
             >
-                { "Throughput MB" }
+                { "Throughput MB/s" }
             </button>
         </div>
     }

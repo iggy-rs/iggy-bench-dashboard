@@ -37,9 +37,9 @@ body {
 }
 
 .content {
-    flex: 1;
     display: flex;
     flex-direction: column;
+    flex: 1;
     min-width: 0;
     background: white;
     position: relative;
@@ -58,6 +58,16 @@ body {
     flex: 1;
     min-height: 0;
     position: relative;
+    width: 100%;
+    display: flex;
+    padding: 0 1rem;
+    box-sizing: border-box;
+}
+
+.single-view>div,
+.trend-view>div {
+    flex: 1;
+    min-height: 400px;
 }
 
 .content iframe {
@@ -587,7 +597,7 @@ body.dark .segment.active {
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 1rem;
+    padding: 0;
 }
 
 .chart-container {
@@ -599,6 +609,9 @@ body.dark .segment.active {
     justify-content: center;
     align-items: center;
     min-height: 400px;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0.5rem;
 }
 
 .trend-view {
@@ -607,7 +620,7 @@ body.dark .segment.active {
     align-items: center;
     width: 100%;
     height: 100%;
-    padding: 20px;
+    padding: 0;
     background-color: var(--background-color);
 }
 
