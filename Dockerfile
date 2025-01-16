@@ -61,7 +61,7 @@ RUN chmod +x /app/docker-entrypoint.sh && \
 
 # Set default environment variables for configuration
 ENV HOST=0.0.0.0 \
-    PORT=8061 \
+    PORT=80 \
     RESULTS_DIR=/data/performance_results
 
 # Set volume for results with proper permissions
@@ -69,9 +69,6 @@ VOLUME ["/data/performance_results"]
 
 # Switch to non-root user
 USER iggy
-
-# Expose the default port
-EXPOSE 8061
 
 # Set the entrypoint script
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
