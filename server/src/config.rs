@@ -25,10 +25,6 @@ pub struct IggyDashboardServerConfig {
     /// Allowed CORS origins (comma-separated)
     #[arg(long, default_value = "*")]
     pub cors_origins: String,
-
-    /// Rate limit per second per IP
-    #[arg(long, default_value_t = 500)]
-    pub rate_limit: u32,
 }
 
 impl IggyDashboardServerConfig {

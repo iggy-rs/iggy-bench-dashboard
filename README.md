@@ -9,7 +9,6 @@ A modern, high-performance benchmark results dashboard for Iggy, built with Rust
 - 📱 Responsive design that works on desktop and mobile
 - 🚀 High-performance Rust backend
 - ⚡ Fast, modern web frontend built with Yew
-- 🔒 Built-in rate limiting and CORS protection
 
 ## Project Structure
 
@@ -199,7 +198,6 @@ Options:
       --results-dir <RESULTS_DIR>    Directory containing performance results [default: ./performance_results]
       --log-level <LOG_LEVEL>        Log level (trace, debug, info, warn, error) [default: info]
       --cors-origins <CORS_ORIGINS>  Allowed CORS origins (comma-separated) [default: *]
-      --rate-limit <RATE_LIMIT>      Rate limit per second per IP [default: 500]
   -h, --help                         Print help
   -V, --version                      Print version
 ```

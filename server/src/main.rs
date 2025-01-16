@@ -5,7 +5,6 @@ mod handlers;
 
 use actix_cors::Cors;
 use actix_files::{self as fs, NamedFile};
-use actix_governor::{Governor, GovernorConfigBuilder};
 use actix_web::{
     http::header,
     middleware::{Compress, Logger},
@@ -79,18 +78,10 @@ async fn main() -> std::io::Result<()> {
         _watcher: Arc::clone(&watcher),
     };
 
-    // Configure rate limiting
-    let governor_conf = GovernorConfigBuilder::default()
-        .seconds_per_request(config.rate_limit as u64)
-        .burst_size(config.rate_limit)
-        .finish()
-        .unwrap();
-
     info!("Starting server on {}", addr);
     info!("Results directory: {}", results_dir.display());
     info!("Log level: {}", config.log_level);
     info!("CORS origins: {}", config.cors_origins);
-    info!("Rate limit: {} requests per second", config.rate_limit);
 
     HttpServer::new(move || {
         let state = state.clone();
@@ -123,7 +114,6 @@ async fn main() -> std::io::Result<()> {
                 r#"%a "%r" %s %b "%{Referer}i" "%{User-Agent}i" %T"#,
             ))
             .wrap(Compress::default())
-            .wrap(Governor::new(&governor_conf))
             .app_data(web::Data::new(AppState {
                 results_dir: results_dir.clone(),
                 cache: Arc::clone(&state.cache),

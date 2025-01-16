@@ -6,7 +6,7 @@ mod state;
 mod types;
 
 use crate::{
-    components::{app_content::AppContent, theme_provider::ThemeProvider},
+    components::{app_content::AppContent, footer::Footer, theme_provider::ThemeProvider},
     state::{
         benchmark::BenchmarkProvider, gitref::VersionProvider, hardware::HardwareProvider,
         view_mode::ViewModeProvider,
@@ -22,27 +22,30 @@ pub fn app() -> Html {
 
     html! {
         <ThemeProvider>
-            <HardwareProvider>
-                <VersionProvider>
-                    <BenchmarkProvider>
-                        <ViewModeProvider>
-                            <AppContent
-                                selected_file={(*selected_file).clone()}
-                                is_dark={false} // This will be overridden by ThemeProvider context
-                                is_benchmark_info_visible={*is_benchmark_info_visible}
-                                on_file_select={Callback::from(move |measurement_type: MeasurementType| {
-                                    selected_file.set(measurement_type);
-                                })}
-                                on_theme_toggle={Callback::from(|_| {})} // This will be overridden by ThemeProvider context
-                                on_benchmark_info_toggle={Callback::from(move |_| {
-                                    let current = *is_benchmark_info_visible;
-                                    is_benchmark_info_visible.set(!current);
-                                })}
-                            />
-                        </ViewModeProvider>
-                    </BenchmarkProvider>
-                </VersionProvider>
-            </HardwareProvider>
+            <div class="app-container">
+                <HardwareProvider>
+                    <VersionProvider>
+                        <BenchmarkProvider>
+                            <ViewModeProvider>
+                                <AppContent
+                                    selected_file={(*selected_file).clone()}
+                                    is_dark={false} // This will be overridden by ThemeProvider context
+                                    is_benchmark_info_visible={*is_benchmark_info_visible}
+                                    on_file_select={Callback::from(move |measurement_type: MeasurementType| {
+                                        selected_file.set(measurement_type);
+                                    })}
+                                    on_theme_toggle={Callback::from(|_| {})} // This will be overridden by ThemeProvider context
+                                    on_benchmark_info_toggle={Callback::from(move |_| {
+                                        let current = *is_benchmark_info_visible;
+                                        is_benchmark_info_visible.set(!current);
+                                    })}
+                                />
+                            </ViewModeProvider>
+                        </BenchmarkProvider>
+                    </VersionProvider>
+                </HardwareProvider>
+                <Footer />
+            </div>
         </ThemeProvider>
     }
 }
