@@ -15,7 +15,7 @@ trap cleanup SIGINT
 
 # Start server in background
 echo "Starting server..."
-(cd "$(dirname "$0")/.." && cargo run --bin iggy-dashboard-server) &
+(cd "$(dirname "$0")/.." && cargo run --bin iggy-benchmarks-dashboard-server) &
 
 # Wait a bit for server to start
 sleep 1

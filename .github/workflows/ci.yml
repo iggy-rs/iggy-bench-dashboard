@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  # Run sanity checks first
+  sanity:
+    uses: ./.github/workflows/sanity.yml
+
+  # Run build and test after sanity checks
+  build-and-test:
+    needs: sanity
+    uses: ./.github/workflows/build-and-test.yml
+
+  # Trigger Docker workflow if needed
+  trigger-docker:
+    needs: [sanity, build-and-test]
+    if: github.event_name == 'push' && contains(github.event.head_commit.modified, 'Cargo.toml')
+    uses: ./.github/workflows/docker.yml

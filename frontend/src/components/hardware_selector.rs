@@ -38,7 +38,7 @@ pub fn hardware_selector(_props: &HardwareSelectorProps) -> Html {
                     html! {
                         <option
                             value={hardware.hostname.clone()}
-                            selected={hardware_ctx.state.selected_hardware.as_ref().map_or(false, |selected| selected == &hardware.hostname)}
+                            selected={hardware_ctx.state.selected_hardware.as_ref() == Some(&hardware.hostname)}
                         >
                             {format!("{} @ {}", &hardware.hostname, &hardware.cpu_name)}
                         </option>

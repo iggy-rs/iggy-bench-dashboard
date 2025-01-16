@@ -7,7 +7,7 @@ ls -la /data/performance_results
 echo "Current user:"
 id
 
-exec /app/iggy-dashboard-server \
+exec /app/iggy-benchmarks-dashboard-server \
     --host "${HOST}" \
     --port "${PORT}" \
     --results-dir "${RESULTS_DIR}"

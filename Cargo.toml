@@ -1,8 +1,8 @@
 [workspace]
-members = ["frontend", "server", "shared", "collector"]
+members = ["collector", "frontend", "server", "shared"]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "Apache-2.0"

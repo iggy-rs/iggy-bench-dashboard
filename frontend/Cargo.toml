@@ -1,5 +1,6 @@
 [package]
-name = "iggy-dashboard-frontend"
+name = "iggy-benchmarks-dashboard-frontend"
+license = "Apache-2.0"
 version.workspace = true
 edition.workspace = true
 

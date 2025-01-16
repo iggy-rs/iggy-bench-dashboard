@@ -34,9 +34,10 @@ impl Reducible for BenchmarkState {
         let next_state = match action {
             BenchmarkAction::SetBenchmarks(benchmarks) => {
                 // Keep selection and info if the selected benchmark still exists
-                let keep_selection = self.selected_benchmark.as_ref().map_or(false, |current| {
-                    benchmarks.iter().any(|b| b.name == *current)
-                });
+                let keep_selection = self
+                    .selected_benchmark
+                    .as_ref()
+                    .is_some_and(|current| benchmarks.iter().any(|b| b.name == *current));
 
                 BenchmarkState {
                     benchmarks,
