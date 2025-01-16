@@ -124,47 +124,45 @@ docker build -t iggy-benchmarks-dashboard .
 
 ### Running the Container
 
-1. First, ensure your performance results directory exists and has proper permissions:
+First, ensure your performance results directory exists and has proper permissions:
 
-   ```bash
-   mkdir -p performance_results
-   chmod 755 performance_results
-   ```
-
-2. Run the container:
+  ```bash
+  mkdir -p performance_results
+  chmod 755 performance_results
+  ```
 
 Basic usage (recommended):
 
-   ```bash
-   docker run -p 8061:8061 \
-      -v "$(pwd)/performance_results:/data/performance_results" \
-      --user "$(id -u):$(id -g)" \
-      iggy-benchmarks-dashboard
-   ```
+  ```bash
+  docker run -p 8061:8061 \
+     -v "$(pwd)/performance_results:/data/performance_results" \
+     --user "$(id -u):$(id -g)" \
+     iggy-benchmarks-dashboard
+  ```
 
 With custom configuration:
 
-   ```bash
-   docker run -p 8061:8061 \
-      -v "$(pwd)/performance_results:/data/performance_results" \
-      --user "$(id -u):$(id -g)" \
-      -e HOST=0.0.0.0 \
-      -e PORT=8061 \
-      -e RESULTS_DIR=/data/performance_results \
-      iggy-benchmarks-dashboard
-   ```
+  ```bash
+  docker run -p 8061:8061 \
+        -v "$(pwd)/performance_results:/data/performance_results" \
+        --user "$(id -u):$(id -g)" \
+        -e HOST=0.0.0.0 \
+        -e PORT=8061 \
+        -e RESULTS_DIR=/data/performance_results \
+        iggy-benchmarks-dashboard
+  ```
 
 Using a named volume:
 
-   ```bash
-   # Create a named volume
-   docker volume create iggy-results
+  ```bash
+  # Create a named volume
+  docker volume create iggy-results
 
-   # Run with named volume
-   docker run -p 8061:8061 \
-      -v iggy-results:/data/performance_results \
-      iggy-benchmarks-dashboard
-   ```
+  # Run with named volume
+  docker run -p 8061:8061 \
+     -v iggy-results:/data/performance_results \
+     iggy-benchmarks-dashboard
+  ```
 
 ## Configuration
 
