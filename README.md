@@ -135,9 +135,81 @@ Note: The development setup uses different ports:
 - Frontend development server: port 8080
 - Backend API server: port 8061
 
+## Running with Docker
+
+### Building the Image
+
+```bash
+docker build -t iggy-dashboard .
+```
+
+### Running the Container
+
+1. First, ensure your performance results directory exists and has proper permissions:
+
+   ```bash
+   mkdir -p performance_results
+   chmod 755 performance_results
+   ```
+
+2. Run the container:
+
+Basic usage (recommended):
+
+   ```bash
+   docker run -p 8061:8061 \
+      -v "$(pwd)/performance_results:/data/performance_results" \
+      --user "$(id -u):$(id -g)" \
+      iggy-dashboard
+   ```
+
+With custom configuration:
+
+   ```bash
+   docker run -p 8061:8061 \
+      -v "$(pwd)/performance_results:/data/performance_results" \
+      --user "$(id -u):$(id -g)" \
+      -e HOST=0.0.0.0 \
+      -e PORT=8061 \
+      -e RESULTS_DIR=/data/performance_results \
+      iggy-dashboard
+   ```
+
+Using a named volume:
+
+   ```bash
+   # Create a named volume
+   docker volume create iggy-results
+
+   # Run with named volume
+   docker run -p 8061:8061 \
+      -v iggy-results:/data/performance_results \
+      iggy-dashboard
+   ```
+
 ## Configuration
 
-### Server Configuration
+### Docker Configuration
+
+#### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| HOST | 0.0.0.0 | Server host address |
+| PORT | 8061 | Server port |
+| RESULTS_DIR | /data/performance_results | Directory for performance results |
+
+#### Volume Permissions
+
+The container is configured to run as a non-root user for security. When mounting a local directory, you should:
+
+1. Use the `--user` flag with your local user ID to ensure proper file permissions
+2. Make sure your local directory has the correct permissions (755)
+3. If using a named volume, the container will handle permissions automatically
+
+### Application Configuration
+
+#### Server Settings
 
 The server can be configured using command-line arguments:
 
@@ -155,7 +227,7 @@ Options:
   -V, --version                      Print version
 ```
 
-### Environment Variables
+### Environment Variables for Development
 
 For development, you can also use environment variables:
 
