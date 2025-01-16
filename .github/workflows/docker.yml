@@ -1,0 +1,69 @@
+name: release-dockerhub
+
+on:
+  workflow_call:
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # We need at least 2 commits to compare changes
+
+      - name: Check if Cargo.toml version changed
+        id: check_version
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Pull request - will build but not push"
+            echo "should_push=false" >> $GITHUB_OUTPUT
+          else
+            if git diff HEAD^ HEAD -- Cargo.toml | grep -q "version = "; then
+              echo "Version in Cargo.toml changed"
+              VERSION=$(grep "^version = " Cargo.toml | cut -d'"' -f2)
+              echo "version=${VERSION}" >> $GITHUB_OUTPUT
+              echo "should_push=true" >> $GITHUB_OUTPUT
+            else
+              echo "Version in Cargo.toml did not change"
+              echo "should_push=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: github.event_name == 'push' && steps.check_version.outputs.should_push == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.check_version.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.check_version.outputs.version }}
+            type=raw,value=latest,enable=${{ github.event_name == 'push' && steps.check_version.outputs.should_push == 'true' }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ github.event_name == 'push' && steps.check_version.outputs.should_push == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

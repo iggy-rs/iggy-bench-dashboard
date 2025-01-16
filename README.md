@@ -1,4 +1,4 @@
-# Iggy Dashboard
+# Iggy Benchmarks Dashboard
 
 A modern, high-performance benchmark results dashboard for Iggy, built with Rust. This application provides a responsive web interface for visualizing and analyzing benchmark results.
 
@@ -65,82 +65,61 @@ The project is organized as a Rust workspace with four main components:
    cd iggy-yew
    ```
 
-2. Build the frontend:
+2. Run the development script:
 
    ```bash
-   cd frontend
-   trunk build --release
+   ./scripts/run_dev.sh
    ```
 
-3. Build the server:
-
-   ```bash
-   cd ../server
-   cargo build --release
-   ```
+   This will start both the frontend development server and the backend server.
 
 ## Running the Application
 
 ### Production Mode
 
-1. Start the server:
+1. Build the release version:
 
    ```bash
-   cd server
-   ./target/release/iggy-dashboard-server --host 127.0.0.1 --port 8061
+   ./scripts/build_release.sh
    ```
 
-2. Start the collector (optional, for benchmark result collection):
+2. Start the server:
+
+   ```bash
+   ./target/release/iggy-benchmarks-dashboard-server --host 127.0.0.1 --port 8061
+   ```
+
+3. Start the collector (optional, for benchmark result collection):
 
    ```bash
    cd collector
    # For GitHub polling:
-   ./target/release/iggy-dashboard-collector --output-dir /path/to/results poll-github --branch main --interval-seconds 300
+   ./target/release/iggy-benchmarks-dashboard-collector --output-dir /path/to/results poll-github --git-ref master --interval-seconds 300
    # For local benchmarks:
-   ./target/release/iggy-dashboard-collector --output-dir /path/to/results local-benchmark --directory /path/to/iggy --git-ref main --count 5
+   ./target/release/iggy-benchmarks-dashboard-collector --output-dir /path/to/results local-benchmark --directory /path/to/iggy --git-ref master --count 5
    ```
-
-3. Access the dashboard at <http://localhost:8061>
 
 ### Development Mode
 
-1. Start the backend server:
+Run the development script to start both the frontend and backend servers:
 
-   ```bash
-   cd server
-   cargo run  # Will run on port 8061
-   ```
+```bash
+./scripts/run_dev.sh
+```
 
-2. Start the collector (optional, for benchmark result collection):
+This will start:
 
-   ```bash
-   cd collector
-   # For GitHub polling:
-   cargo run -- --output-dir /path/to/results poll-github --branch main --interval-seconds 300
-   # For local benchmarks:
-   cargo run -- --output-dir /path/to/results local-benchmark --directory /path/to/iggy --git-ref main --count 5
-   ```
+- Frontend development server on port 8060
+- Backend API server on port 8061
 
-3. In a separate terminal, start the frontend development server:
-
-   ```bash
-   cd frontend
-   trunk serve  # Will run on port 8080
-   ```
-
-4. Access the development version at <http://localhost:8080>
-
-Note: The development setup uses different ports:
-
-- Frontend development server: port 8080
-- Backend API server: port 8061
+Access the development version at <http://localhost:8060>
 
 ## Running with Docker
 
 ### Building the Image
 
 ```bash
-docker build -t iggy-dashboard .
+docker build -t iggy-benchmarks-dashboard .
 ```
 
 ### Running the Container
@@ -160,7 +139,7 @@ Basic usage (recommended):
    docker run -p 8061:8061 \
       -v "$(pwd)/performance_results:/data/performance_results" \
       --user "$(id -u):$(id -g)" \
-      iggy-dashboard
+      iggy-benchmarks-dashboard
    ```
 
 With custom configuration:
@@ -172,7 +151,7 @@ With custom configuration:
       -e HOST=0.0.0.0 \
       -e PORT=8061 \
       -e RESULTS_DIR=/data/performance_results \
-      iggy-dashboard
+      iggy-benchmarks-dashboard
    ```
 
 Using a named volume:
@@ -184,7 +163,7 @@ Using a named volume:
    # Run with named volume
    docker run -p 8061:8061 \
       -v iggy-results:/data/performance_results \
-      iggy-dashboard
+      iggy-benchmarks-dashboard
    ```
 
 ## Configuration
@@ -214,7 +193,7 @@ The container is configured to run as a non-root user for security. When mountin
 The server can be configured using command-line arguments:
 
 ```bash
-iggy-dashboard-server [OPTIONS]
+iggy-benchmarks-dashboard-server [OPTIONS]
 
 Options:
       --host <HOST>                  Server host address [default: 127.0.0.1]
@@ -244,14 +223,6 @@ The server provides the following REST API endpoints:
 - `GET /api/benchmarks/{version}/{hardware}` - List benchmarks for version and hardware
 - `GET /api/benchmark_info/{path}` - Get detailed benchmark information
 - `GET /health` - Server health check
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ## License
 
