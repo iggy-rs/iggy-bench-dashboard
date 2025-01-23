@@ -2,8 +2,12 @@ use crate::config::get_api_base_url;
 use crate::error::{IggyDashboardError, Result};
 use gloo::console::log;
 use gloo::net::http::Request;
-use shared::{BenchmarkDetails, BenchmarkHardware, BenchmarkInfoFromDirectoryName};
+use iggy_benchmark_report::hardware::BenchmarkHardware;
+use iggy_benchmark_report::report::BenchmarkReport;
+use shared::BenchmarkReportLight;
 use std::sync::atomic::{AtomicBool, Ordering};
+use uuid::Uuid;
+use web_sys::window;
 
 static HEALTH_CHECK_DONE: AtomicBool = AtomicBool::new(false);
 
@@ -31,47 +35,10 @@ async fn check_server_health() -> Result<()> {
     Ok(())
 }
 
-pub async fn fetch_unique_benchmarks(
-    version: Option<&str>,
-    hardware: Option<&str>,
-) -> Result<Vec<BenchmarkInfoFromDirectoryName>> {
+pub async fn fetch_hardware_configurations() -> Result<Vec<BenchmarkHardware>> {
     check_server_health().await?;
 
-    let version =
-        version.ok_or_else(|| IggyDashboardError::Server("Version is required".into()))?;
-    let url = if let Some(hardware) = hardware {
-        format!(
-            "{}/api/benchmarks/{}/{}",
-            get_api_base_url(),
-            version,
-            hardware
-        )
-    } else {
-        format!("{}/api/benchmarks/{}", get_api_base_url(), version)
-    };
-
-    let resp = Request::get(&url)
-        .send()
-        .await
-        .map_err(|e| IggyDashboardError::Network(e.to_string()))?;
-
-    if !resp.ok() {
-        return Err(IggyDashboardError::Server(resp.status().to_string()));
-    }
-
-    resp.json()
-        .await
-        .map_err(|e| IggyDashboardError::Parse(e.to_string()))
-}
-
-pub async fn fetch_benchmark_info(benchmark_path: &str) -> Result<BenchmarkDetails> {
-    check_server_health().await?;
-
-    let url = format!(
-        "{}/api/benchmark_info/{}",
-        get_api_base_url(),
-        benchmark_path
-    );
+    let url = format!("{}/api/hardware", get_api_base_url());
 
     let resp = Request::get(&url)
         .send()
@@ -80,7 +47,7 @@ pub async fn fetch_benchmark_info(benchmark_path: &str) -> Result<BenchmarkDetai
 
     if !resp.ok() {
         return Err(IggyDashboardError::Server(format!(
-            "Failed to fetch benchmark info: {}",
+            "Failed to fetch hardware configurations: {}",
             resp.status()
         )));
     }
@@ -90,10 +57,10 @@ pub async fn fetch_benchmark_info(benchmark_path: &str) -> Result<BenchmarkDetai
         .map_err(|e| IggyDashboardError::Parse(e.to_string()))
 }
 
-pub async fn fetch_versions_for_hardware(hardware: &str) -> Result<Vec<String>> {
+pub async fn fetch_gitrefs_for_hardware(hardware: &str) -> Result<Vec<String>> {
     check_server_health().await?;
 
-    let url = format!("{}/api/versions/{}", get_api_base_url(), hardware);
+    let url = format!("{}/api/gitrefs/{}", get_api_base_url(), hardware);
 
     let resp = Request::get(&url)
         .send()
@@ -101,37 +68,108 @@ pub async fn fetch_versions_for_hardware(hardware: &str) -> Result<Vec<String>> 
         .map_err(|e| IggyDashboardError::Network(e.to_string()))?;
 
     if !resp.ok() {
-        return Err(IggyDashboardError::Server(resp.status().to_string()));
-    }
-
-    let versions: Vec<String> = resp
-        .json()
-        .await
-        .map_err(|e| IggyDashboardError::Parse(e.to_string()))?;
-
-    log!(format!(
-        "Found versions for hardware {}: {:?}",
-        hardware, versions
-    ));
-    Ok(versions)
-}
-
-pub async fn fetch_available_hardware() -> Result<Vec<BenchmarkHardware>> {
-    check_server_health().await?;
-
-    let url = format!("{}/api/hardware", get_api_base_url());
-    log!(format!("Fetching hardware from: {}", url));
-
-    let resp = Request::get(&url)
-        .send()
-        .await
-        .map_err(|e| IggyDashboardError::Network(e.to_string()))?;
-
-    if !resp.ok() {
-        return Err(IggyDashboardError::Server(resp.status().to_string()));
+        return Err(IggyDashboardError::Server(format!(
+            "Failed to fetch git refs: {}",
+            resp.status()
+        )));
     }
 
     resp.json()
         .await
         .map_err(|e| IggyDashboardError::Parse(e.to_string()))
+}
+
+pub async fn fetch_benchmarks_for_hardware_and_gitref(
+    hardware: &str,
+    gitref: &str,
+) -> Result<Vec<BenchmarkReportLight>> {
+    check_server_health().await?;
+
+    let url = format!(
+        "{}/api/benchmarks/{}/{}",
+        get_api_base_url(),
+        hardware,
+        gitref
+    );
+
+    let resp = Request::get(&url)
+        .send()
+        .await
+        .map_err(|e| IggyDashboardError::Network(e.to_string()))?;
+
+    if !resp.ok() {
+        return Err(IggyDashboardError::Server(format!(
+            "Failed to fetch benchmarks: {}",
+            resp.status()
+        )));
+    }
+
+    resp.json()
+        .await
+        .map_err(|e| IggyDashboardError::Parse(e.to_string()))
+}
+
+pub async fn fetch_benchmark_report_full(uuid: &Uuid) -> Result<BenchmarkReport> {
+    check_server_health().await?;
+
+    let url = format!("{}/api/benchmark/full/{}", get_api_base_url(), uuid);
+
+    let resp = Request::get(&url)
+        .send()
+        .await
+        .map_err(|e| IggyDashboardError::Network(e.to_string()))?;
+
+    if !resp.ok() {
+        return Err(IggyDashboardError::Server(format!(
+            "Failed to fetch benchmark report: {}",
+            resp.status()
+        )));
+    }
+
+    resp.json()
+        .await
+        .map_err(|e| IggyDashboardError::Parse(e.to_string()))
+}
+
+pub async fn fetch_benchmark_trend(
+    hardware: &str,
+    params_identifier: &str,
+) -> Result<Vec<BenchmarkReportLight>> {
+    check_server_health().await?;
+
+    let url = format!(
+        "{}/api/benchmark/trend/{}/{}",
+        get_api_base_url(),
+        hardware,
+        params_identifier
+    );
+
+    let resp = Request::get(&url)
+        .send()
+        .await
+        .map_err(|e| IggyDashboardError::Network(e.to_string()))?;
+
+    if !resp.ok() {
+        return Err(IggyDashboardError::Server(format!(
+            "Failed to fetch benchmark trend: {}",
+            resp.status()
+        )));
+    }
+
+    resp.json()
+        .await
+        .map_err(|e| IggyDashboardError::Parse(e.to_string()))
+}
+
+pub fn download_test_artifacts(uuid: &Uuid) {
+    // Create the download URL
+    let url = format!("{}/api/artifacts/{}", get_api_base_url(), uuid);
+
+    // Use browser's native download functionality
+    if let Some(window) = window() {
+        let _ = window
+            .location()
+            .set_href(&url)
+            .map_err(|_| log!("Failed to initiate download"));
+    }
 }

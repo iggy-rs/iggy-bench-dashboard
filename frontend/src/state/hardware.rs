@@ -1,5 +1,4 @@
-use gloo::console::log;
-use shared::BenchmarkHardware;
+use iggy_benchmark_report::hardware::BenchmarkHardware;
 use std::rc::Rc;
 use yew::prelude::*;
 
@@ -11,7 +10,7 @@ pub struct HardwareState {
 
 pub enum HardwareAction {
     SetHardwareList(Vec<BenchmarkHardware>),
-    SelectHardware(String),
+    SelectHardware(Option<String>),
 }
 
 #[derive(Clone, PartialEq)]
@@ -31,23 +30,14 @@ impl Reducible for HardwareState {
 
     fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
         let next_state = match action {
-            HardwareAction::SetHardwareList(hardware_list) => {
-                log!(
-                    "Available hardware updated:",
-                    format!("{:?}", &hardware_list)
-                );
-                HardwareState {
-                    hardware_list,
-                    selected_hardware: self.selected_hardware.clone(),
-                }
-            }
-            HardwareAction::SelectHardware(hardware) => {
-                log!("Hardware selection updated to:", format!("{:?}", &hardware));
-                HardwareState {
-                    hardware_list: self.hardware_list.clone(),
-                    selected_hardware: Some(hardware),
-                }
-            }
+            HardwareAction::SetHardwareList(hardware_list) => HardwareState {
+                hardware_list,
+                selected_hardware: self.selected_hardware.clone(),
+            },
+            HardwareAction::SelectHardware(hardware) => HardwareState {
+                hardware_list: self.hardware_list.clone(),
+                selected_hardware: hardware,
+            },
         };
 
         next_state.into()

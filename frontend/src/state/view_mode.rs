@@ -2,13 +2,13 @@ use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ViewMode {
-    SingleVersion, // View detailed performance for a specific version
-    VersionTrend,  // View performance trends across all versions
+    SingleGitref, // View detailed performance for a specific gitref
+    GitrefTrend,  // View performance trends across all gitrefs
 }
 
 impl Default for ViewMode {
     fn default() -> Self {
-        Self::SingleVersion
+        Self::SingleGitref
     }
 }
 
@@ -28,8 +28,8 @@ impl Reducible for ViewModeState {
         let next_state = match action {
             ViewModeAction::ToggleMode => Self {
                 mode: match self.mode {
-                    ViewMode::SingleVersion => ViewMode::VersionTrend,
-                    ViewMode::VersionTrend => ViewMode::SingleVersion,
+                    ViewMode::SingleGitref => ViewMode::GitrefTrend,
+                    ViewMode::GitrefTrend => ViewMode::SingleGitref,
                 },
             },
         };

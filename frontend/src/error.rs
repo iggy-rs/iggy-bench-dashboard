@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum IggyDashboardError {
     #[error("Network error: {0}")]
     Network(String),

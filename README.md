@@ -5,6 +5,14 @@ A modern, high-performance benchmark results dashboard for Iggy, built with Rust
 ## Features
 
 - 📊 Interactive performance trend visualization
+  - Support for multiple benchmark types:
+    - Send (Producer) benchmarks
+    - Poll (Consumer) benchmarks
+    - Send & Poll (Combined) benchmarks
+    - Consumer Group Poll benchmarks
+  - Separate visualization for producer and consumer metrics
+  - Comprehensive latency metrics (Average, P95, P99, P999)
+  - Trend and throughput charts across all benchmarks, hardware and versions
 - 🔍 Filter benchmarks by hardware and version
 - 📱 Responsive design that works on desktop and mobile
 - 🚀 High-performance Rust backend
@@ -24,16 +32,99 @@ The project is organized as a Rust workspace with four main components:
   - Configurable through command-line arguments
   - Built-in security features
 
-- `collector/`: Benchmark results collector
-  - Polls GitHub for CI benchmark results
+- `runner/`: Benchmark runner
   - Runs local benchmarks and collects results
   - Organizes benchmark results in a structured format
-  - Supports both local and remote result collection
 
 - `shared/`: Common code between components
   - Type definitions
   - Serialization logic
   - Shared constants
+
+## API Endpoints
+
+The server provides the following REST API endpoints:
+
+### Health Check
+
+- `GET /health`
+  - Check server health status
+  - Response: `{"status": "healthy"}`
+
+### Hardware Information
+
+- `GET /api/hardware`
+  - List all available hardware configurations
+  - Response: Array of hardware configurations
+
+### Git References
+
+- `GET /api/gitrefs/{hardware}`
+  - List git references for specific hardware
+  - Parameters:
+    - `hardware`: Hardware configuration identifier
+  - Response: Array of git reference strings
+
+### Benchmarks
+
+- `GET /api/benchmarks/{gitref}`
+  - List all benchmarks for a specific git reference
+  - Parameters:
+    - `gitref`: Git reference identifier
+  - Response: Array of benchmark summaries
+
+- `GET /api/benchmarks/{hardware}/{gitref}`
+  - List benchmarks for specific hardware and git reference
+  - Parameters:
+    - `hardware`: Hardware configuration identifier
+    - `gitref`: Git reference identifier
+  - Response: Array of benchmark summaries
+
+### Benchmark Reports
+
+- `GET /api/benchmark/full/{unique_id}`
+  - Get full benchmark report
+  - Parameters:
+    - `unique_id`: UUID of the benchmark
+  - Response: Complete benchmark report JSON
+
+- `GET /api/benchmark/light/{unique_id}`
+  - Get lightweight benchmark report
+  - Parameters:
+    - `unique_id`: UUID of the benchmark
+  - Response: Simplified benchmark report JSON
+
+### Trend Analysis
+
+- `GET /api/benchmark/trend/{hardware}/{params_identifier}`
+  - Get benchmark trend data
+  - Parameters:
+    - `hardware`: Hardware configuration identifier
+    - `params_identifier`: Benchmark parameters identifier
+  - Response: Array of benchmark data points for trend analysis
+
+### Test Artifacts
+
+- `GET /api/benchmark/{unique_id}/artifacts`
+  - Download test artifacts for a benchmark
+  - Parameters:
+    - `unique_id`: UUID of the benchmark
+  - Response: ZIP archive containing test artifacts
+
+All endpoints return JSON responses (except artifacts which returns a ZIP file) and use standard HTTP status codes:
+
+- 200: Success
+- 404: Resource not found
+- 500: Server error
+
+### Runner
+
+Allows to run and collect performance results for multiple gitrefs back:
+
+```bash
+cargo run --bin iggy-dashboard-bench-runner -- --directory ~/rust/iggy --count 10 --gitref master --skip-master-check
+out --output-dir performance_results
+```
 
 ## Prerequisites
 
@@ -86,16 +177,6 @@ The project is organized as a Rust workspace with four main components:
 
    ```bash
    ./target/release/iggy-benchmarks-dashboard-server --host 127.0.0.1 --port 8061
-   ```
-
-3. Start the collector (optional, for benchmark result collection):
-
-   ```bash
-   cd collector
-   # For GitHub polling:
-   ./target/release/iggy-benchmarks-dashboard-collector --output-dir /path/to/results poll-github --git-ref master --interval-seconds 300
-   # For local benchmarks:
-   ./target/release/iggy-benchmarks-dashboard-collector --output-dir /path/to/results local-benchmark --directory /path/to/iggy --git-ref master --count 5
    ```
 
 ### Development Mode
@@ -208,17 +289,6 @@ For development, you can also use environment variables:
 
 - `RUST_LOG`: Control log level and filters
 - `RUST_BACKTRACE`: Enable backtraces (1 = enabled, full = full backtraces)
-
-## API Endpoints
-
-The server provides the following REST API endpoints:
-
-- `GET /api/hardware` - List available hardware configurations
-- `GET /api/versions/{hardware}` - List versions for specific hardware
-- `GET /api/benchmarks/{version}` - List benchmarks for a version
-- `GET /api/benchmarks/{version}/{hardware}` - List benchmarks for version and hardware
-- `GET /api/benchmark_info/{path}` - Get detailed benchmark information
-- `GET /health` - Server health check
 
 ## License
 

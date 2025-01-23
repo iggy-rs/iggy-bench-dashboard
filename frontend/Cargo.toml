@@ -8,7 +8,6 @@ edition.workspace = true
 charming = { version = "0.4.0", features = ["wasm"] }
 gloo = "0.11"
 js-sys = "0.3"
-serde = { version = "1.0", features = ["derive"] }
 shared = { path = "../shared" }
 thiserror = "2.0"
 wasm-bindgen = "0.2"
@@ -16,6 +15,10 @@ web-sys = { version = "0.3", features = [
     "Window",
     "Location",
     "HtmlSelectElement",
+    "Clipboard",
+    "Navigator",
 ] }
 yew = { version = "0.21", features = ["csr"] }
 yew-hooks = "0.3.3"
+iggy-benchmark-report = { path = "/home/gruszeck/rust/iggy/bench/report" }
+uuid = { version = "1.12.1", features = ["serde"] }

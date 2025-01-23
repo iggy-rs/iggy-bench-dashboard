@@ -6,14 +6,16 @@ use thiserror::Error;
 pub enum IggyDashboardServerError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
-    #[error("Directory entry error: {0}")]
-    DirEntry(String),
     #[error("Invalid path: {0}")]
     InvalidPath(String),
     #[error("Not found: {0}")]
     NotFound(String),
     #[error("Invalid JSON: {0}")]
     InvalidJson(String),
+    #[error("Invalid UUID format: {0}")]
+    InvalidUuid(String),
+    #[error("Internal error: {0}")]
+    InternalError(String),
 }
 
 impl ResponseError for IggyDashboardServerError {

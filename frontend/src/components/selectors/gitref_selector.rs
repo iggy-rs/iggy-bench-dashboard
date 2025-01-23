@@ -4,38 +4,38 @@ use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct GitrefSelectorProps {
-    pub versions: Vec<String>,
-    pub selected_version: String,
-    pub on_version_select: Callback<String>,
+    pub gitrefs: Vec<String>,
+    pub selected_gitref: String,
+    pub on_gitref_select: Callback<String>,
 }
 
-#[function_component(Gitref)]
-pub fn version_selector(props: &GitrefSelectorProps) -> Html {
+#[function_component(GitrefSelector)]
+pub fn gitref_selector(props: &GitrefSelectorProps) -> Html {
     let onchange = {
-        let on_version_select = props.on_version_select.clone();
+        let on_gitref_select = props.on_gitref_select.clone();
         Callback::from(move |e: Event| {
             if let Some(select) = e
                 .target()
                 .and_then(|t| t.dyn_into::<HtmlSelectElement>().ok())
             {
-                let version = select.value();
-                on_version_select.emit(version);
+                let gitref = select.value();
+                on_gitref_select.emit(gitref);
             }
         })
     };
 
     html! {
-        <div class="version-select">
+        <div class="gitref-select">
             <h3>{"Version"}</h3>
-            <select {onchange} value={props.selected_version.clone()}>
+            <select {onchange} value={props.selected_gitref.clone()}>
                 {
-                    props.versions.iter().map(|version| {
+                    props.gitrefs.iter().map(|gitref| {
                         html! {
                             <option
-                                value={version.clone()}
-                                selected={version == &props.selected_version}
+                                value={gitref.clone()}
+                                selected={gitref == &props.selected_gitref}
                             >
-                                {version}
+                                {gitref}
                             </option>
                         }
                     }).collect::<Html>()

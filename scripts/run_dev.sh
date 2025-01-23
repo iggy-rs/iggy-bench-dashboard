@@ -13,6 +13,17 @@ cleanup() {
 # Set up trap for SIGINT (Ctrl+C)
 trap cleanup SIGINT
 
+# Parse arguments
+TRUNK_ARGS=""
+if [ $# -gt 0 ]; then
+    if [ "$1" = "open" ]; then
+        TRUNK_ARGS="--open"
+    else
+        echo "Error: Invalid argument. Only 'open' is supported."
+        exit 1
+    fi
+fi
+
 # Start server in background
 echo "Starting server..."
 (cd "$(dirname "$0")/.." && cargo run --bin iggy-benchmarks-dashboard-server) &
@@ -22,7 +33,7 @@ sleep 1
 
 # Start frontend in background
 echo "Starting frontend..."
-(cd "$(dirname "$0")/.." && trunk serve --config frontend/Trunk.toml) &
+(cd "$(dirname "$0")/.." && trunk serve --config frontend/Trunk.toml $TRUNK_ARGS) &
 
 # Wait for all background processes
 wait

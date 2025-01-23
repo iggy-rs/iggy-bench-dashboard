@@ -34,20 +34,15 @@ pub fn theme_provider(props: &ThemeProviderProps) -> Html {
         });
     }
 
-    // Create context
-    let theme_context = use_state(|| *is_dark);
     let toggle_theme = {
         let is_dark = is_dark.clone();
-        let theme_context = theme_context.clone();
         Callback::from(move |_| {
-            let new_value = !*is_dark;
-            is_dark.set(new_value);
-            theme_context.set(new_value);
+            is_dark.set(!*is_dark);
         })
     };
 
     html! {
-        <ContextProvider<(bool, Callback<()>)> context={(*theme_context, toggle_theme)}>
+        <ContextProvider<(bool, Callback<()>)> context={(*is_dark, toggle_theme)}>
             {props.children.clone()}
         </ContextProvider<(bool, Callback<()>)>>
     }

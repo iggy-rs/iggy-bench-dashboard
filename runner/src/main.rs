@@ -1,11 +1,9 @@
 mod app;
 mod args;
-mod github;
-mod validate;
 
 use anyhow::Result;
-use app::IggyDashboardApp;
-use args::IggyDashboardArgs;
+use app::IggyDashboardBenchRunnerApp;
+use args::IggyDashboardBenchRunnerArgs;
 use clap::Parser;
 use tracing::{error, info};
 use tracing_subscriber::{
@@ -14,12 +12,11 @@ use tracing_subscriber::{
     util::SubscriberInitExt,
     EnvFilter,
 };
-use validate::Validatable;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     // Parse arguments first
-    let args = IggyDashboardArgs::parse();
+    let args = IggyDashboardBenchRunnerArgs::parse();
 
     // Initialize tracing
     let env_filter =
@@ -40,6 +37,6 @@ async fn main() -> Result<()> {
     info!("Output directory: {}", args.output_dir);
     info!("Log level: {}", args.log_level);
 
-    let app = IggyDashboardApp::new(args)?;
+    let app = IggyDashboardBenchRunnerApp::new(args)?;
     app.run().await
 }

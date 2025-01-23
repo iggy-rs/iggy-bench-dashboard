@@ -3,46 +3,41 @@ mod components;
 mod config;
 mod error;
 mod state;
-mod types;
 
 use crate::{
     components::{app_content::AppContent, footer::Footer, theme_provider::ThemeProvider},
-    state::{
-        benchmark::BenchmarkProvider, gitref::VersionProvider, hardware::HardwareProvider,
-        view_mode::ViewModeProvider,
-    },
-    types::MeasurementType,
+    state::{hardware::HardwareProvider, view_mode::ViewModeProvider},
 };
+use components::selectors::measurement_type_selector::MeasurementType;
+use state::{benchmark::BenchmarkProvider, gitref::GitrefProvider};
 use yew::prelude::*;
 
 #[function_component(App)]
 pub fn app() -> Html {
-    let selected_file = use_state(|| MeasurementType::Latency);
-    let is_benchmark_info_visible = use_state(|| false);
+    let selected_measurement = use_state(|| MeasurementType::Latency);
+    let is_benchmark_tooltip_visible = use_state(|| false);
 
     html! {
         <ThemeProvider>
             <div class="app-container">
                 <HardwareProvider>
-                    <VersionProvider>
+                    <GitrefProvider>
                         <BenchmarkProvider>
                             <ViewModeProvider>
                                 <AppContent
-                                    selected_file={(*selected_file).clone()}
-                                    is_dark={false} // This will be overridden by ThemeProvider context
-                                    is_benchmark_info_visible={*is_benchmark_info_visible}
-                                    on_file_select={Callback::from(move |measurement_type: MeasurementType| {
-                                        selected_file.set(measurement_type);
+                                    selected_measurement={(*selected_measurement).clone()}
+                                    on_measurement_select={Callback::from(move |measurement_type| {
+                                        selected_measurement.set(measurement_type);
                                     })}
-                                    on_theme_toggle={Callback::from(|_| {})} // This will be overridden by ThemeProvider context
-                                    on_benchmark_info_toggle={Callback::from(move |_| {
-                                        let current = *is_benchmark_info_visible;
-                                        is_benchmark_info_visible.set(!current);
+                                    is_benchmark_tooltip_visible={*is_benchmark_tooltip_visible}
+                                    on_benchmark_tooltip_toggle={Callback::from(move |()| {
+                                        let current = *is_benchmark_tooltip_visible;
+                                        is_benchmark_tooltip_visible.set(!current);
                                     })}
                                 />
                             </ViewModeProvider>
                         </BenchmarkProvider>
-                    </VersionProvider>
+                    </GitrefProvider>
                 </HardwareProvider>
                 <Footer />
             </div>

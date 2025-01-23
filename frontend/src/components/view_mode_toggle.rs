@@ -4,7 +4,7 @@ use yew::prelude::*;
 #[function_component(ViewModeToggle)]
 pub fn view_mode_toggle() -> Html {
     let view_mode_ctx = use_view_mode();
-    let is_trend_view = matches!(view_mode_ctx.mode, ViewMode::VersionTrend);
+    let is_trend_view = matches!(view_mode_ctx.mode, ViewMode::GitrefTrend);
 
     let onclick = {
         let view_mode_ctx = view_mode_ctx.clone();
@@ -15,6 +15,7 @@ pub fn view_mode_toggle() -> Html {
 
     html! {
         <div class="view-mode-container">
+            <h3>{"View Mode"}</h3>
             <div class="segmented-control">
                 <button
                     class={if !is_trend_view { "segment active" } else { "segment" }}
