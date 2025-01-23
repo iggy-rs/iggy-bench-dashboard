@@ -153,13 +153,13 @@ impl LocalBenchmarkRunner {
         Ok(())
     }
 
-    pub fn checkout_to_git_ref(&self, git_ref: &str) -> Result<()> {
-        match self.repo.find_branch(git_ref, BranchType::Local) {
+    pub fn checkout_to_gitref(&self, gitref: &str) -> Result<()> {
+        match self.repo.find_branch(gitref, BranchType::Local) {
             Ok(branch) => {
                 self.checkout_branch(&branch)?;
             }
             Err(_) => {
-                let remote_branch_ref = format!("refs/remotes/origin/{}", git_ref);
+                let remote_branch_ref = format!("refs/remotes/origin/{}", gitref);
                 if let Ok(reference) = self.repo.find_reference(&remote_branch_ref) {
                     let commit = reference.peel_to_commit().with_context(|| {
                         format!("Failed to peel remote branch '{}'", remote_branch_ref)
@@ -167,17 +167,17 @@ impl LocalBenchmarkRunner {
 
                     let branch = self
                         .repo
-                        .branch(git_ref, &commit, false)
-                        .with_context(|| format!("Failed to create local branch '{}'", git_ref))?;
+                        .branch(gitref, &commit, false)
+                        .with_context(|| format!("Failed to create local branch '{}'", gitref))?;
 
                     self.checkout_branch(&branch)?;
 
                     info!(
                         "Created and checked out to local branch '{}' tracking '{}'",
-                        git_ref, remote_branch_ref
+                        gitref, remote_branch_ref
                     );
                 } else {
-                    self.checkout_commit(git_ref)?;
+                    self.checkout_commit(gitref)?;
                 }
             }
         }
@@ -185,20 +185,20 @@ impl LocalBenchmarkRunner {
         Ok(())
     }
 
-    /// Retrieves the last `n` commits up to `git_ref`, inclusive.
-    pub fn get_last_n_commits(&self, git_ref: &str, n: u64) -> Result<Vec<String>> {
-        info!("Getting last {} commits starting from '{}'", n, git_ref);
+    /// Retrieves the last `n` commits up to `gitref`, inclusive.
+    pub fn get_last_n_commits(&self, gitref: &str, n: u64) -> Result<Vec<String>> {
+        info!("Getting last {} commits starting from '{}'", n, gitref);
 
-        // Resolve the git_ref to a Git object (could be a commit, tag, or branch)
+        // Resolve the gitref to a Git object (could be a commit, tag, or branch)
         let obj = self
             .repo
-            .revparse_single(git_ref)
-            .with_context(|| format!("Failed to resolve git ref '{}'", git_ref))?;
+            .revparse_single(gitref)
+            .with_context(|| format!("Failed to resolve git ref '{}'", gitref))?;
 
         // Ensure the object is a commit
         let commit = obj
             .peel_to_commit()
-            .with_context(|| format!("Reference '{}' does not point to a commit", git_ref))?;
+            .with_context(|| format!("Reference '{}' does not point to a commit", gitref))?;
 
         let oid = commit.id();
 
@@ -219,7 +219,7 @@ impl LocalBenchmarkRunner {
                 "Requested {} commits, but only found {} commits starting from '{}'",
                 n,
                 commits.len(),
-                git_ref
+                gitref
             );
         }
 

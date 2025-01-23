@@ -1,300 +1,336 @@
-use crate::cache::BenchmarkCache;
-use crate::error::IggyDashboardServerError;
+use crate::{cache::BenchmarkCache, error::IggyDashboardServerError};
 use actix_web::{get, web, HttpRequest, HttpResponse};
-use chrono::DateTime;
-use shared::{
-    BenchmarkData, BenchmarkDataJson, BenchmarkInfo, BenchmarkInfoFromDirectoryName,
-    BenchmarkTrendData,
-};
-use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use tracing::info;
+use tracing::{info, warn};
+use uuid::Uuid;
+use walkdir::WalkDir;
+use zip::{write::FileOptions, ZipWriter};
 
 type Result<T> = std::result::Result<T, IggyDashboardServerError>;
 
 pub struct AppState {
-    pub results_dir: PathBuf,
     pub cache: Arc<BenchmarkCache>,
-}
-
-fn get_client_ip(req: &HttpRequest) -> String {
-    req.connection_info()
-        .realip_remote_addr()
-        .unwrap_or("unknown")
-        .to_string()
-}
-
-fn read_dir_entries(path: &Path) -> Result<impl Iterator<Item = Result<std::fs::DirEntry>>> {
-    Ok(std::fs::read_dir(path)
-        .map_err(|_| IggyDashboardServerError::NotFound("Results directory not found".to_string()))?
-        .map(|r| r.map_err(|e| IggyDashboardServerError::DirEntry(e.to_string()))))
-}
-
-fn is_dir_entry(entry: &std::fs::DirEntry) -> Result<bool> {
-    Ok(entry
-        .file_type()
-        .map_err(|e| IggyDashboardServerError::DirEntry(e.to_string()))?
-        .is_dir())
 }
 
 #[get("/health")]
 pub async fn health_check(req: HttpRequest) -> Result<HttpResponse> {
-    let client_ip = get_client_ip(&req);
-    info!("Health check request from {}", client_ip);
+    let client_addr = get_client_addr(&req);
+    info!("{}: Health check request", client_addr);
     Ok(HttpResponse::Ok().json(serde_json::json!({ "status": "healthy" })))
-}
-
-#[get("/api/versions/{hardware}")]
-pub async fn list_versions(
-    data: web::Data<AppState>,
-    hardware: web::Path<String>,
-    req: HttpRequest,
-) -> Result<HttpResponse> {
-    let client_ip = get_client_ip(&req);
-    let hardware = hardware.into_inner();
-    info!(
-        "Listing versions for hardware {} from client {}",
-        hardware, client_ip
-    );
-
-    let benchmarks = data.cache.get_hardware_benchmarks(&hardware);
-    let mut versions = Vec::new();
-    let mut seen_versions = std::collections::HashSet::new();
-
-    for path in benchmarks {
-        if let Some(benchmark) = BenchmarkInfoFromDirectoryName::from_dirname(&path) {
-            if let Some(details) = data.cache.get_benchmark(&path) {
-                info!(
-                    "Processing benchmark path: {}, version: {}, git_ref_date: {}",
-                    path, benchmark.version, details.params.git_ref_date
-                );
-
-                // Only add version if we haven't seen it before
-                if seen_versions.insert(benchmark.version.clone()) {
-                    versions.push((
-                        DateTime::parse_from_str(
-                            &details.params.git_ref_date,
-                            "%Y-%m-%dT%H:%M:%S%z",
-                        )
-                        .unwrap_or_else(|_| {
-                            DateTime::parse_from_str(
-                                "1970-01-01T00:00:00+0000",
-                                "%Y-%m-%dT%H:%M:%S%z",
-                            )
-                            .unwrap()
-                        }),
-                        benchmark.version,
-                    ));
-                }
-            }
-        }
-    }
-
-    versions.sort_by(|a, b| b.0.cmp(&a.0));
-
-    let versions = versions
-        .into_iter()
-        .map(|(_, version)| version)
-        .collect::<Vec<String>>();
-
-    info!(
-        "Found {} versions for hardware {} from client {}",
-        versions.len(),
-        hardware,
-        client_ip
-    );
-    Ok(HttpResponse::Ok().json(versions))
 }
 
 #[get("/api/hardware")]
 pub async fn list_hardware(data: web::Data<AppState>, req: HttpRequest) -> Result<HttpResponse> {
-    let client_ip = get_client_ip(&req);
-    info!("Listing hardware from client {}", client_ip);
+    let client_addr = get_client_addr(&req);
+    info!("{}: Listing hardware configurations", client_addr);
 
     let hardware_list = data.cache.get_hardware_configurations();
 
     info!(
-        "Found {} hardware configurations from client {}",
-        hardware_list.len(),
-        client_ip
+        "{}: Found {} hardware configurations",
+        client_addr,
+        hardware_list.len()
     );
+
     Ok(HttpResponse::Ok().json(hardware_list))
 }
 
-#[get("/api/benchmarks/{version}")]
-pub async fn list_benchmarks(
+#[get("/api/gitrefs/{hardware}")]
+pub async fn list_gitrefs_for_hardware(
     data: web::Data<AppState>,
-    version: web::Path<String>,
+    hardware: web::Path<String>,
     req: HttpRequest,
 ) -> Result<HttpResponse> {
-    let client_ip = get_client_ip(&req);
-    let version = version.into_inner();
+    let client_addr = get_client_addr(&req);
     info!(
-        "Listing benchmarks for version {} from client {}",
-        version, client_ip
+        "{}: Listing git refs for hardware '{}'",
+        client_addr, hardware
     );
 
-    let benchmarks = data.cache.get_benchmarks_for_version(&version);
+    let gitrefs = data.cache.get_gitrefs_for_hardware(&hardware);
 
     info!(
-        "Found {} benchmarks for version {} from client {}",
+        "{}: Found {} git refs for hardware '{}'",
+        client_addr,
+        gitrefs.len(),
+        hardware
+    );
+    Ok(HttpResponse::Ok().json(gitrefs))
+}
+
+#[get("/api/benchmarks/{gitref}")]
+pub async fn list_benchmarks_for_gitref(
+    data: web::Data<AppState>,
+    gitref: web::Path<String>,
+    req: HttpRequest,
+) -> Result<HttpResponse> {
+    let client_addr = get_client_addr(&req);
+    let gitref = gitref.into_inner();
+    info!(
+        "{}: Listing benchmarks for git ref '{}'",
+        client_addr, gitref
+    );
+
+    let benchmarks = data.cache.get_benchmarks_for_gitref(&gitref);
+
+    info!(
+        "{}: Found {} benchmarks for git ref '{}'",
+        client_addr,
         benchmarks.len(),
-        version,
-        client_ip
+        gitref
     );
     Ok(HttpResponse::Ok().json(benchmarks))
 }
 
-#[get("/api/benchmarks/{version}/{hardware}")]
-pub async fn list_benchmarks_with_hardware(
+#[get("/api/benchmarks/{hardware}/{gitref}")]
+pub async fn list_benchmarks_for_hardware_and_gitref(
     data: web::Data<AppState>,
     path: web::Path<(String, String)>,
     req: HttpRequest,
 ) -> Result<HttpResponse> {
-    let client_ip = get_client_ip(&req);
-    let (version, hardware) = path.into_inner();
+    let client_addr = get_client_addr(&req);
+    let (hardware, gitref) = path.into_inner();
     info!(
-        "Listing benchmarks for version {} and hardware {} from client {}",
-        version, hardware, client_ip
+        "{}: Listing benchmarks for git ref '{}'",
+        client_addr, gitref
     );
 
     let benchmarks = data
         .cache
-        .get_benchmarks_for_version_and_hardware(&version, &hardware);
-
+        .get_benchmarks_for_hardware_and_gitref(&hardware, &gitref);
     info!(
-        "Found {} benchmarks for version {} and hardware {} from client {}",
+        "{}: Found {} benchmarks for git ref '{}'",
+        client_addr,
         benchmarks.len(),
-        version,
-        hardware,
-        client_ip
+        gitref
     );
     Ok(HttpResponse::Ok().json(benchmarks))
 }
 
-#[get("/api/benchmark_info/{benchmark_path}")]
-pub async fn get_benchmark_info(
+#[get("/api/benchmark/full/{unique_id}")]
+pub async fn get_benchmark_report_full(
     data: web::Data<AppState>,
-    benchmark_path: web::Path<String>,
+    uuid_str: web::Path<String>,
     req: HttpRequest,
 ) -> Result<HttpResponse> {
-    let client_ip = get_client_ip(&req);
-    let benchmark_path = benchmark_path.into_inner();
+    let client_addr = get_client_addr(&req);
     info!(
-        "Getting benchmark info for {} from client {}",
-        benchmark_path, client_ip
+        "{}: Requesting full benchmark report '{}'",
+        client_addr, uuid_str
     );
 
-    let details = data.cache.get_benchmark(&benchmark_path).ok_or_else(|| {
-        IggyDashboardServerError::NotFound(format!("Benchmark not found: {}", benchmark_path))
+    let uuid = Uuid::parse_str(&uuid_str).map_err(|_| {
+        IggyDashboardServerError::NotFound(format!("Invalid UUID format: '{}'", uuid_str))
+    })?;
+
+    let json_path = data.cache.get_benchmark_json_path(&uuid).ok_or_else(|| {
+        IggyDashboardServerError::NotFound(format!("Benchmark '{}' not found", uuid_str))
+    })?;
+
+    let json_content = std::fs::read_to_string(&json_path).map_err(|e| {
+        IggyDashboardServerError::NotFound(format!(
+            "Report file not found for '{}': {}",
+            json_path.display(),
+            e
+        ))
     })?;
 
     info!(
-        "Found benchmark info for {} from client {}",
-        benchmark_path, client_ip
+        "{}: Found full benchmark report for uuid '{}' at '{:?}'",
+        client_addr, uuid_str, json_path
     );
-    Ok(HttpResponse::Ok().json(details))
+    Ok(HttpResponse::Ok()
+        .content_type("application/json")
+        .body(json_content))
 }
 
-#[get("/api/trend/{benchmark}/{hardware}")]
+#[get("/api/benchmark/light/{unique_id}")]
+pub async fn get_benchmark_report_light(
+    data: web::Data<AppState>,
+    uuid_str: web::Path<String>,
+    req: HttpRequest,
+) -> Result<HttpResponse> {
+    let client_addr = get_client_addr(&req);
+    info!(
+        "{}: Requesting light benchmark report '{}'",
+        client_addr, uuid_str
+    );
+
+    let uuid = match Uuid::parse_str(&uuid_str) {
+        Ok(uuid) => uuid,
+        Err(e) => {
+            warn!(
+                "{client_addr}: Invalid UUID format in light benchmark request: '{uuid_str}', error: {e}",
+            );
+            return Err(IggyDashboardServerError::InvalidUuid(format!(
+                "Invalid UUID format: '{}'",
+                uuid_str
+            )));
+        }
+    };
+
+    match data.cache.get_benchmark_report_light(&uuid) {
+        Some(report) => {
+            info!(
+                "{}: Found light benchmark report for uuid '{}'",
+                client_addr, uuid_str
+            );
+            Ok(HttpResponse::Ok().json(report))
+        }
+        None => {
+            warn!(
+                "{}: Light benchmark report not found for uuid '{}'",
+                client_addr, uuid_str
+            );
+            Err(IggyDashboardServerError::NotFound(format!(
+                "Benchmark '{}' not found",
+                uuid_str
+            )))
+        }
+    }
+}
+
+#[get("/api/benchmark/trend/{hardware}/{params_identifier}")]
 pub async fn get_benchmark_trend(
     data: web::Data<AppState>,
     path: web::Path<(String, String)>,
     req: HttpRequest,
 ) -> Result<HttpResponse> {
-    let (benchmark, hardware) = path.into_inner();
-    let client_ip = get_client_ip(&req);
+    let (hardware, params_identifier) = path.into_inner();
+    let client_addr = get_client_addr(&req);
     info!(
-        "Getting trend data for benchmark {} on hardware {} from client {}",
-        benchmark, hardware, client_ip
+        "{}: Requesting trend data for hardware '{}' with params identifier '{}'",
+        client_addr, hardware, params_identifier
     );
 
-    let mut trend_data = Vec::new();
+    let trend_data = data
+        .cache
+        .get_benchmark_trend_data(&params_identifier, &hardware)
+        .ok_or_else(|| {
+            IggyDashboardServerError::NotFound(format!(
+                "Trend data not found for hardware '{}' with params identifier '{}'",
+                hardware, params_identifier
+            ))
+        })?;
 
-    for entry in read_dir_entries(&data.results_dir)? {
-        let entry = entry?;
+    info!(
+        "{}: Found {} trend data points for hardware '{}' with params identifier '{}'",
+        client_addr,
+        trend_data.len(),
+        hardware,
+        params_identifier
+    );
 
-        if !is_dir_entry(&entry)? {
-            continue;
-        }
-
-        if let Some(benchmark_info) = BenchmarkInfoFromDirectoryName::from_dirname(
-            entry.file_name().to_string_lossy().as_ref(),
-        ) {
-            if benchmark_info.name == benchmark && benchmark_info.hardware == hardware {
-                let data_path = entry.path().join("data.json");
-                if let Ok(data) = std::fs::read_to_string(&data_path) {
-                    if let Ok(data_json) = serde_json::from_str::<BenchmarkDataJson>(&data) {
-                        trend_data.push((
-                            data_json.params.timestamp,
-                            BenchmarkTrendData {
-                                version: benchmark_info.version.clone(),
-                                data: BenchmarkData {
-                                    latency_avg: data_json.summary.average_avg_latency_ms,
-                                    latency_p50: data_json.summary.average_p50_latency_ms,
-                                    latency_p95: data_json.summary.average_p95_latency_ms,
-                                    latency_p99: data_json.summary.average_p99_latency_ms,
-                                    latency_p999: data_json.summary.average_p999_latency_ms,
-                                    throughput_mb: data_json
-                                        .summary
-                                        .average_throughput_megabytes_per_second,
-                                    throughput_msgs: data_json
-                                        .summary
-                                        .average_throughput_messages_per_second,
-                                },
-                            },
-                        ));
-                    }
-                }
-            }
-        }
-    }
-
-    // Sort by timestamp
-    trend_data.sort_by(|a, b| a.0.cmp(&b.0));
-
-    // Return only the BenchmarkTrendData part
-    Ok(HttpResponse::Ok().json(
-        trend_data
-            .into_iter()
-            .map(|(_, data)| data)
-            .collect::<Vec<_>>(),
-    ))
+    Ok(HttpResponse::Ok().json(trend_data))
 }
 
-#[get("/api/single/{benchmark_path}")]
-pub async fn get_single_benchmark(
+#[get("/api/artifacts/{uuid}")]
+pub async fn get_test_artifacts(
     data: web::Data<AppState>,
-    benchmark_path: web::Path<String>,
+    uuid_str: web::Path<String>,
     req: HttpRequest,
 ) -> Result<HttpResponse> {
-    let client_ip = get_client_ip(&req);
-    let benchmark_path = benchmark_path.into_inner();
-
+    let client_addr = get_client_addr(&req);
     info!(
-        "Getting single benchmark {} from client {}",
-        benchmark_path, client_ip
+        "{}: Requesting test artifacts for uuid '{}'",
+        client_addr, uuid_str
     );
 
-    let path = data.results_dir.join(&benchmark_path);
+    let uuid = match Uuid::parse_str(&uuid_str) {
+        Ok(uuid) => uuid,
+        Err(_) => {
+            warn!("{client_addr}: Invalid UUID format in test artifacts request: '{uuid_str}'",);
+            return Err(IggyDashboardServerError::InvalidUuid(uuid_str.to_string()));
+        }
+    };
 
-    if !path.exists() {
-        return Err(IggyDashboardServerError::NotFound(format!(
-            "Benchmark {} not found",
-            benchmark_path
-        )));
-    }
+    // Get the benchmark report to find its directory
+    let artifacts_dir = match data.cache.get_benchmark_path(&uuid) {
+        Some(path) => path,
+        None => {
+            warn!(
+                "{}: Benchmark not found for uuid '{}'",
+                client_addr, uuid_str
+            );
+            return Err(IggyDashboardServerError::NotFound(format!(
+                "Benchmark '{}' not found",
+                uuid_str
+            )));
+        }
+    };
 
-    let benchmark_info = load_benchmark_info(&path)?;
-    Ok(HttpResponse::Ok().json(benchmark_info))
+    // Create a buffer for the zip file
+    let mut zip_buffer = Vec::new();
+    {
+        let mut zip = ZipWriter::new(std::io::Cursor::new(&mut zip_buffer));
+        let options = FileOptions::default()
+            .compression_method(zip::CompressionMethod::Deflated)
+            .unix_permissions(0o755)
+            as FileOptions<zip::write::ExtendedFileOptions>;
+
+        // Walk through all files in the directory
+        for entry in WalkDir::new(&artifacts_dir) {
+            let entry = entry.map_err(|e| {
+                IggyDashboardServerError::InternalError(format!("Error walking directory: {}", e))
+            })?;
+
+            if entry.file_type().is_file() {
+                let path = entry.path();
+                let relative_path = path.strip_prefix(&artifacts_dir).map_err(|e| {
+                    IggyDashboardServerError::InternalError(format!(
+                        "Error creating relative path: {}",
+                        e
+                    ))
+                })?;
+
+                // Add file to zip
+                zip.start_file(
+                    relative_path.to_string_lossy().into_owned(),
+                    options.clone(),
+                )
+                .map_err(|e| {
+                    IggyDashboardServerError::InternalError(format!(
+                        "Error adding file to zip: {}",
+                        e
+                    ))
+                })?;
+
+                let mut file = std::fs::File::open(path).map_err(|e| {
+                    IggyDashboardServerError::InternalError(format!("Error opening file: {}", e))
+                })?;
+                std::io::copy(&mut file, &mut zip).map_err(|e| {
+                    IggyDashboardServerError::InternalError(format!(
+                        "Error copying file to zip: {}",
+                        e
+                    ))
+                })?;
+            }
+        }
+
+        // Finish zip file
+        zip.finish().map_err(|e| {
+            IggyDashboardServerError::InternalError(format!("Error finalizing zip file: {}", e))
+        })?;
+    } // zip is dropped here
+
+    info!(
+        "{}: Successfully created zip archive for test artifacts of uuid '{}'",
+        client_addr, uuid_str
+    );
+
+    // Return the zip file
+    Ok(HttpResponse::Ok()
+        .content_type("application/zip")
+        .append_header((
+            "Content-Disposition",
+            format!("attachment; filename=\"test_artifacts_{}.zip\"", uuid_str),
+        ))
+        .body(zip_buffer))
 }
 
-fn load_benchmark_info(path: &Path) -> Result<BenchmarkInfo> {
-    let data_path = path.join("data.json");
-    let data_content = std::fs::read_to_string(&data_path).map_err(|_| {
-        IggyDashboardServerError::NotFound(format!("Data file not found for {}", path.display()))
-    })?;
-
-    serde_json::from_str(&data_content)
-        .map_err(|e| IggyDashboardServerError::InvalidJson(e.to_string()))
+fn get_client_addr(req: &HttpRequest) -> String {
+    req.connection_info()
+        .peer_addr()
+        .unwrap_or("unknown")
+        .to_string()
 }

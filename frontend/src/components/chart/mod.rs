@@ -1,6 +1,7 @@
-pub mod single;
-pub mod trend;
-use shared::BenchmarkTrendData;
+mod plot_trend;
+pub mod single_chart;
+pub mod trend_chart;
+
 use wasm_bindgen::prelude::wasm_bindgen;
 use web_sys::Element;
 
@@ -13,16 +14,9 @@ pub struct PlotConfig {
 }
 
 #[derive(Debug, Clone)]
-pub struct TrendPlotData {
-    pub versions: Vec<String>,
-    pub data: Vec<BenchmarkTrendData>,
-}
-
-#[derive(Debug, Clone)]
 pub enum PlotType {
     Latency,
     Throughput,
-    ThroughputMb,
 }
 
 #[wasm_bindgen]

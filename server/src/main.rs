@@ -3,6 +3,7 @@ mod config;
 mod error;
 mod handlers;
 
+use crate::cache::CacheWatcher;
 use actix_cors::Cors;
 use actix_files::{self as fs, NamedFile};
 use actix_web::{
@@ -10,7 +11,7 @@ use actix_web::{
     middleware::{Compress, Logger},
     web, App, HttpServer,
 };
-use cache::{BenchmarkCache, CacheWatcher};
+use cache::BenchmarkCache;
 use config::IggyDashboardServerConfig;
 use handlers::AppState;
 use std::sync::Arc;
@@ -115,24 +116,18 @@ async fn main() -> std::io::Result<()> {
             ))
             .wrap(Compress::default())
             .app_data(web::Data::new(AppState {
-                results_dir: results_dir.clone(),
                 cache: Arc::clone(&state.cache),
             }))
             // API routes
             .service(handlers::health_check)
-            .service(handlers::list_versions)
             .service(handlers::list_hardware)
-            .service(handlers::list_benchmarks)
-            .service(handlers::list_benchmarks_with_hardware)
-            .service(handlers::get_benchmark_info)
+            .service(handlers::list_gitrefs_for_hardware)
+            .service(handlers::list_benchmarks_for_gitref)
+            .service(handlers::list_benchmarks_for_hardware_and_gitref)
+            .service(handlers::get_benchmark_report_full)
+            .service(handlers::get_benchmark_report_light)
             .service(handlers::get_benchmark_trend)
-            .service(handlers::get_single_benchmark)
-            // Serve performance results
-            .service(
-                fs::Files::new("/performance_results", &results_dir)
-                    .use_last_modified(true)
-                    .show_files_listing(),
-            )
+            .service(handlers::get_test_artifacts)
             // Serve static files from frontend/dist
             .service(
                 fs::Files::new("/", "frontend/dist")

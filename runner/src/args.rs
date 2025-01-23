@@ -1,17 +1,26 @@
-use crate::validate::Validatable;
-use anyhow::Result;
-use clap::Args;
 use std::path::Path;
 
-#[derive(Debug, Args)]
-pub struct LocalBenchmarkArgs {
+use anyhow::Result;
+use clap::Parser;
+
+#[derive(Debug, Parser)]
+#[command(version, about, long_about = None, verbatim_doc_comment)]
+pub struct IggyDashboardBenchRunnerArgs {
+    /// Directory where to copy benchmark results
+    #[arg(long, short)]
+    pub output_dir: String,
+
+    /// Log level (error|warn|info|debug|trace)
+    #[arg(long, default_value = "info")]
+    pub log_level: String,
+
     /// Path to the `iggy` repository
     #[arg(long)]
     pub directory: String,
 
     /// Git ref (tag, branch or sha1) to start benchmark from
     #[arg(long)]
-    pub git_ref: String,
+    pub gitref: String,
 
     /// How many commits or tags to go back
     #[arg(long)]
@@ -22,8 +31,8 @@ pub struct LocalBenchmarkArgs {
     pub skip_master_checkout: bool,
 }
 
-impl Validatable for LocalBenchmarkArgs {
-    fn validate(&self) -> Result<()> {
+impl IggyDashboardBenchRunnerArgs {
+    pub fn validate(&self) -> Result<()> {
         // Check if directory exists
         if !Path::new(&self.directory).exists() {
             anyhow::bail!("Directory '{}' does not exist", self.directory);
