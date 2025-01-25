@@ -31,8 +31,8 @@ jobs:
       - name: Build Server
         run: cargo build --release --package iggy-benchmarks-dashboard-server
 
-      - name: Build Collector
-        run: cargo build --release --package iggy-benchmarks-dashboard-collector
+      - name: Build Runner
+        run: cargo build --release --package iggy-dashboard-bench-runner
 
   test:
     name: Test
