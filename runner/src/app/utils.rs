@@ -4,7 +4,7 @@ use tempfile::TempDir;
 use tokio::fs;
 
 /// Retrieves the full path to the `performance_results` directory within a `TempDir`.
-pub async fn get_performance_results_directory(tempdir: &TempDir) -> Result<String> {
+pub async fn _get_performance_results_directory(tempdir: &TempDir) -> Result<String> {
     let temp_path = tempdir.path();
 
     let mut entries = fs::read_dir(temp_path)

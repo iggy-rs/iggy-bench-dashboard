@@ -9,9 +9,7 @@ anyhow = "1.0.94"
 clap = { version = "4.5.23", features = ["derive"] }
 dircpy = "0.3.19"
 git2 = "0.20.0"
-octocrab = { version = "0.43.0", features = ["tokio"] }
 tempfile = "3.14.0"
 tokio = { version = "1.42.0", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "time"] }
-zip = "2.2.1"
