@@ -32,7 +32,7 @@ jobs:
         run: cargo build --release --package iggy-benchmarks-dashboard-server
 
       - name: Build Runner
-        run: cargo build --release --package iggy-dashboard-bench-runner
+        run: cargo build --release --package iggy-benchmarks-runner
 
   test:
     name: Test

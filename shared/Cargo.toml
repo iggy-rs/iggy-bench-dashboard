@@ -6,5 +6,5 @@ edition.workspace = true
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
-iggy-benchmark-report = { git = "https://github.com/iggy-rs/iggy.git" }
 uuid = { version = "1.12.1", features = ["serde"] }
+iggy-benchmark-report = { workspace = true }
