@@ -60,10 +60,14 @@ async fn main() -> std::io::Result<()> {
 
     // Initialize cache
     let cache = Arc::new(BenchmarkCache::new(results_dir.clone()));
+    info!("Starting cache load...");
+    let start = std::time::Instant::now();
     if let Err(e) = cache.load() {
         error!("Failed to load cache: {}", e);
         std::process::exit(1);
     }
+    let duration = start.elapsed();
+    info!("Cache loaded in {:.2?}", duration);
 
     // Initialize file watcher
     let watcher = match CacheWatcher::new(Arc::clone(&cache), results_dir.clone()) {

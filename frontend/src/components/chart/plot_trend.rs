@@ -49,7 +49,7 @@ pub fn create_chart(
 }
 
 fn create_latency_trend_chart(data: &[BenchmarkReportLight], is_dark: bool) -> Chart {
-    let subtext = "Latency comparison across versions";
+    let subtext = data[0].params.format_params();
     let title = trend_chart_title(&data[0].params, ChartKind::Latency);
 
     // Collect all GitRefs for the x-axis
@@ -76,7 +76,7 @@ fn create_latency_trend_chart(data: &[BenchmarkReportLight], is_dark: bool) -> C
     let mut consumer_p99_latencies = Vec::new();
     let mut consumer_p999_latencies = Vec::new();
 
-    let mut chart = IggyChart::new(&title, subtext, is_dark)
+    let mut chart = IggyChart::new(&title, &subtext, is_dark)
         .with_category_x_axis("Version", gitrefs)
         .with_y_axis("Latency [ms]");
 
@@ -92,9 +92,8 @@ fn create_latency_trend_chart(data: &[BenchmarkReportLight], is_dark: bool) -> C
                 GroupMetricsKind::Consumers => {
                     poll_summary = Some(&group_metric.summary);
                 }
-
                 // GroupMetricsKind::ProducersAndConsumers => {
-                // for now ignore this
+                // for now ignored
                 // }
                 _ => {}
             }
@@ -196,14 +195,14 @@ fn create_throughput_trend_chart(data: &[BenchmarkReportLight], is_dark: bool) -
         })
         .collect();
 
-    let subtext = "todo";
+    let subtext = data[0].params.format_params();
     let gitrefs = data
         .iter()
         .map(|d| d.params.gitref.clone().unwrap_or("Unknown".to_string()))
         .collect();
     let title = trend_chart_title(&data[0].params, ChartKind::Throughput);
 
-    IggyChart::new(&title, subtext, is_dark)
+    IggyChart::new(&title, &subtext, is_dark)
         .with_category_x_axis("Version", gitrefs)
         .with_dual_y_axis("Throughput [MB/s]", "Throughput [msg/s]")
         .add_dual_series(

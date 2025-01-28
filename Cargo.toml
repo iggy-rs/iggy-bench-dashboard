@@ -1,8 +1,11 @@
 [workspace]
-members = ["runner", "frontend", "server"]
+members = ["frontend", "runner", "server"]
 resolver = "2"
 
 [workspace.package]
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 license = "Apache-2.0"
+
+[workspace.dependencies]
+iggy-benchmark-report = { git = "https://github.com/iggy-rs/iggy.git", version = "0.1.1" }
