@@ -83,7 +83,7 @@ impl Reducible for BenchmarkState {
                     entries: self.entries.clone(),
                 };
 
-                // Then try to find a matching benchmark with the same parameters
+                // Try to find a matching benchmark if we had a previous selection
                 if let Some(current) = &self.selected_benchmark {
                     if let Some(benchmarks) = self.entries.get(&kind) {
                         let matching = benchmarks.iter().find(|b| {
@@ -92,6 +92,7 @@ impl Reducible for BenchmarkState {
                                 && b.params.messages_per_batch == current.params.messages_per_batch
                                 && b.params.transport == current.params.transport
                                 && b.params.remark == current.params.remark
+                                && b.params.partitions == current.params.partitions
                         });
 
                         if matching.is_none() {
@@ -101,6 +102,12 @@ impl Reducible for BenchmarkState {
                             log!("Matching benchmark found");
                             next_state.selected_benchmark = matching.cloned();
                         }
+                    }
+                } else {
+                    // If we don't have a current selection, select the first available benchmark
+                    if let Some(benchmarks) = self.entries.get(&kind) {
+                        next_state.selected_benchmark = benchmarks.first().cloned();
+                        log!("No previous selection, selecting first available benchmark");
                     }
                 }
 

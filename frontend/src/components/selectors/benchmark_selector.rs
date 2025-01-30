@@ -3,16 +3,21 @@ use crate::{
     state::benchmark::{use_benchmark, BenchmarkAction},
 };
 use iggy_benchmark_report::benchmark_kind::BenchmarkKind;
-use web_sys::HtmlSelectElement;
+use std::collections::HashSet;
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
-pub struct BenchmarkSelectorProps {}
+pub struct BenchmarkSelectorProps {
+    pub is_consumer_group: bool,
+}
 
 #[function_component(BenchmarkSelector)]
-pub fn benchmark_selector(_props: &BenchmarkSelectorProps) -> Html {
+pub fn benchmark_selector(props: &BenchmarkSelectorProps) -> Html {
     let benchmark_ctx = use_benchmark();
     let selected_kind = benchmark_ctx.state.selected_kind;
+
+    // Get all available benchmark kinds
+    let available_kinds: HashSet<_> = benchmark_ctx.state.entries.keys().cloned().collect();
 
     // Create a longer-lived reference to the current benchmarks
     let empty_vec = Vec::new();
@@ -25,17 +30,15 @@ pub fn benchmark_selector(_props: &BenchmarkSelectorProps) -> Html {
     let on_benchmark_select = {
         let dispatch = benchmark_ctx.dispatch.clone();
         let entries = benchmark_ctx.state.entries.clone();
-        Callback::from(move |e: Event| {
-            let target = e.target_dyn_into::<HtmlSelectElement>();
-            if let Some(select) = target {
-                let value = select.value();
-                let selected_benchmark = entries.get(&selected_kind).and_then(|benchmarks| {
-                    benchmarks.iter().find(|b| b.params.pretty_name == value)
-                });
-                dispatch.emit(BenchmarkAction::SelectBenchmark(Box::new(
-                    selected_benchmark.cloned(),
-                )));
-            }
+        Callback::from(move |pretty_name: String| {
+            let selected_benchmark = entries.get(&selected_kind).and_then(|benchmarks| {
+                benchmarks
+                    .iter()
+                    .find(|b| b.params.pretty_name == pretty_name)
+            });
+            dispatch.emit(BenchmarkAction::SelectBenchmark(Box::new(
+                selected_benchmark.cloned(),
+            )));
         })
     };
 
@@ -59,23 +62,36 @@ pub fn benchmark_selector(_props: &BenchmarkSelectorProps) -> Html {
             <BenchmarkKindSelector
                 selected_kind={selected_kind}
                 on_kind_select={on_kind_select}
+                is_consumer_group={props.is_consumer_group}
+                available_kinds={available_kinds}
             />
 
-            <select
-                onchange={on_benchmark_select}
-                value={current_value.clone()}
-            >
+            <div class="benchmark-list">
                 {current_benchmarks.iter().map(|benchmark| {
+                    let pretty_name = benchmark.params.pretty_name.clone();
+                    let is_active = pretty_name == current_value;
+                    let on_click = {
+                        let on_benchmark_select = on_benchmark_select.clone();
+                        let pretty_name = pretty_name.clone();
+                        Callback::from(move |_| {
+                            on_benchmark_select.emit(pretty_name.clone());
+                        })
+                    };
+
                     html! {
-                        <option
-                            value={benchmark.params.pretty_name.clone()}
-                            selected={benchmark.params.pretty_name == current_value}
+                        <div
+                            class={classes!(
+                                "benchmark-list-item",
+                                is_active.then_some("active")
+                            )}
+                            onclick={on_click}
                         >
-                            {benchmark.params.pretty_name.clone()}
-                        </option>
+                            <span class="benchmark-list-item-dot" />
+                            {pretty_name}
+                        </div>
                     }
                 }).collect::<Html>()}
-            </select>
+            </div>
         </div>
     }
 }

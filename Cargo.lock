@@ -1856,8 +1856,8 @@ dependencies = [
 
 [[package]]
 name = "iggy-benchmark-report"
-version = "0.1.1"
-source = "git+https://github.com/iggy-rs/iggy.git#ea07f693cb8b693d03c95e39ce15ad58a69ea1cc"
+version = "0.1.2"
+source = "git+https://github.com/iggy-rs/iggy.git#85348157db29ee02d2f14e3033d03860ad586ff2"
 dependencies = [
  "byte-unit",
  "charming",
@@ -1873,7 +1873,7 @@ dependencies = [
 
 [[package]]
 name = "iggy-benchmarks-dashboard-frontend"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "charming",
  "gloo 0.11.0",
@@ -1890,7 +1890,7 @@ dependencies = [
 
 [[package]]
 name = "iggy-benchmarks-dashboard-server"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "actix-cors",
  "actix-files",
@@ -1914,7 +1914,7 @@ dependencies = [
 
 [[package]]
 name = "iggy-benchmarks-runner"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "anyhow",
  "clap",
@@ -2939,7 +2939,7 @@ dependencies = [
 
 [[package]]
 name = "shared"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "iggy-benchmark-report",
  "serde",
