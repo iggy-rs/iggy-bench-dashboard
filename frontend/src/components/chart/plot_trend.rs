@@ -5,7 +5,6 @@ use charming::{
     Chart, Echarts, WasmRenderer,
 };
 use iggy_benchmark_report::{
-    benchmark_kind::BenchmarkKind,
     group_metrics_kind::GroupMetricsKind,
     group_metrics_summary::BenchmarkGroupMetricsSummary,
     params::BenchmarkParams,
@@ -14,16 +13,13 @@ use iggy_benchmark_report::{
 use shared::BenchmarkReportLight;
 
 fn trend_chart_title(params: &BenchmarkParams, kind: ChartKind) -> String {
-    let kind_str = match params.benchmark_kind {
-        BenchmarkKind::Send => "Send",
-        BenchmarkKind::Poll => "Poll",
-        BenchmarkKind::SendAndPoll => "Send and Poll",
-        BenchmarkKind::ConsumerGroupPoll => "Consumer Group Poll",
-    };
     if let Some(remark) = &params.remark {
-        format!("{} Trend - {} Benchmark ({})", kind, kind_str, remark)
+        format!(
+            "{} Trend - {} Benchmark ({})",
+            kind, params.benchmark_kind, remark
+        )
     } else {
-        format!("{} Trend - {} Benchmark", kind, kind_str)
+        format!("{} Trend - {} Benchmark", kind, params.benchmark_kind)
     }
 }
 

@@ -1,6 +1,7 @@
 use crate::api;
 use crate::components::benchmark_info_toggle::BenchmarkInfoToggle;
 use crate::components::benchmark_info_tooltip::BenchmarkInfoTooltip;
+use crate::components::selectors::measurement_type_selector::MeasurementType;
 use crate::components::theme_toggle::ThemeToggle;
 use crate::state::benchmark::use_benchmark;
 use crate::state::view_mode::use_view_mode;
@@ -11,8 +12,10 @@ pub struct TopBarProps {
     pub is_dark: bool,
     pub is_benchmark_tooltip_visible: bool,
     pub selected_gitref: String,
+    pub selected_measurement: MeasurementType,
     pub on_theme_toggle: Callback<bool>,
     pub on_benchmark_tooltip_toggle: Callback<()>,
+    pub on_measurement_select: Callback<MeasurementType>,
 }
 
 #[function_component(TopBar)]
@@ -71,12 +74,31 @@ pub fn topbar(props: &TopBarProps) -> Html {
                                         }
                                     }
                                 </div>
+                                <div class="measurement-buttons">
+                                    <button
+                                        class={classes!(
+                                            "measurement-button",
+                                            (props.selected_measurement == MeasurementType::Latency).then_some("active")
+                                        )}
+                                        onclick={props.on_measurement_select.reform(|_| MeasurementType::Latency)}
+                                    >
+                                        { "Latency" }
+                                    </button>
+                                    <button
+                                        class={classes!(
+                                            "measurement-button",
+                                            (props.selected_measurement == MeasurementType::Throughput).then_some("active")
+                                        )}
+                                        onclick={props.on_measurement_select.reform(|_| MeasurementType::Throughput)}
+                                    >
+                                        { "Throughput" }
+                                    </button>
+                                </div>
                             </>
                         }
                     } else {
                         html! {}
                     }
-
                 }
             </div>
         </div>

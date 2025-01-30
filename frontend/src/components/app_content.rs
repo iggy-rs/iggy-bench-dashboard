@@ -193,8 +193,6 @@ pub fn app_content(props: &AppContentProps) -> Html {
     html! {
         <div class="container">
             <Sidebar
-                selected_measurement={props.selected_measurement.clone()}
-                on_measurement_select={props.on_measurement_select.clone()}
                 on_gitref_select={Callback::from(move |gitref: String| {
                     gitref_ctx.dispatch.emit(GitrefAction::SetSelectedGitref(Some(gitref)));
                 })}
@@ -206,6 +204,7 @@ pub fn app_content(props: &AppContentProps) -> Html {
                 is_benchmark_tooltip_visible={props.is_benchmark_tooltip_visible}
                 on_theme_toggle={on_theme_toggle}
                 on_benchmark_tooltip_toggle={props.on_benchmark_tooltip_toggle.clone()}
+                on_measurement_select={props.on_measurement_select.clone()}
                 view_mode={view_mode_ctx.mode.clone()}
             />
         </div>
