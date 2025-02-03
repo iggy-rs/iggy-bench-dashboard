@@ -5,7 +5,7 @@ use clap::Parser;
 
 #[derive(Debug, Parser)]
 #[command(version, about, long_about = None, verbatim_doc_comment)]
-pub struct IggyDashboardBenchRunnerArgs {
+pub struct IggyBenchRunnerArgs {
     /// Directory where to copy benchmark results
     #[arg(long, short)]
     pub output_dir: String,
@@ -31,7 +31,7 @@ pub struct IggyDashboardBenchRunnerArgs {
     pub skip_master_checkout: bool,
 }
 
-impl IggyDashboardBenchRunnerArgs {
+impl IggyBenchRunnerArgs {
     pub fn validate(&self) -> Result<()> {
         // Check if directory exists
         if !Path::new(&self.directory).exists() {

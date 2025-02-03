@@ -7,4 +7,4 @@ set -e
 trunk build --release --config frontend/Trunk.toml
 
 # Build server
-cargo build --release --bin iggy-benchmarks-dashboard-server
+cargo build --release --bin iggy-bench-dashboard-server

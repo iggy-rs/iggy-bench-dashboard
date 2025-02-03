@@ -5,14 +5,14 @@ use dircpy::copy_dir;
 use local_benchmark_runner::LocalBenchmarkRunner;
 use tracing::info;
 
-use crate::args::IggyDashboardBenchRunnerArgs;
+use crate::args::IggyBenchRunnerArgs;
 
-pub struct IggyDashboardBenchRunnerApp {
-    args: IggyDashboardBenchRunnerArgs,
+pub struct IggyBenchRunnerApp {
+    args: IggyBenchRunnerArgs,
 }
 
-impl IggyDashboardBenchRunnerApp {
-    pub fn new(args: IggyDashboardBenchRunnerArgs) -> Result<Self> {
+impl IggyBenchRunnerApp {
+    pub fn new(args: IggyBenchRunnerArgs) -> Result<Self> {
         Ok(Self { args })
     }
 
@@ -20,7 +20,7 @@ impl IggyDashboardBenchRunnerApp {
         self.local_benchmark(&self.args).await
     }
 
-    async fn local_benchmark(&self, args: &IggyDashboardBenchRunnerArgs) -> Result<()> {
+    async fn local_benchmark(&self, args: &IggyBenchRunnerArgs) -> Result<()> {
         let repo_path = args.directory.clone();
         let local_benchmark = LocalBenchmarkRunner::new(&repo_path)?;
         local_benchmark.fetch_from_remote()?;

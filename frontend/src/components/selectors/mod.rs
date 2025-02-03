@@ -3,3 +3,4 @@ pub mod benchmark_selector;
 pub mod gitref_selector;
 pub mod hardware_selector;
 pub mod measurement_type_selector;
+pub mod view_mode_selector;

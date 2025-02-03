@@ -1,4 +1,4 @@
-use crate::{cache::BenchmarkCache, error::IggyDashboardServerError};
+use crate::{cache::BenchmarkCache, error::IggyBenchDashboardServerError};
 use actix_web::{get, web, HttpRequest, HttpResponse};
 use std::sync::Arc;
 use tracing::{info, warn};
@@ -6,7 +6,7 @@ use uuid::Uuid;
 use walkdir::WalkDir;
 use zip::{write::FileOptions, ZipWriter};
 
-type Result<T> = std::result::Result<T, IggyDashboardServerError>;
+type Result<T> = std::result::Result<T, IggyBenchDashboardServerError>;
 
 pub struct AppState {
     pub cache: Arc<BenchmarkCache>,
@@ -120,15 +120,15 @@ pub async fn get_benchmark_report_full(
     );
 
     let uuid = Uuid::parse_str(&uuid_str).map_err(|_| {
-        IggyDashboardServerError::NotFound(format!("Invalid UUID format: '{}'", uuid_str))
+        IggyBenchDashboardServerError::NotFound(format!("Invalid UUID format: '{}'", uuid_str))
     })?;
 
     let json_path = data.cache.get_benchmark_json_path(&uuid).ok_or_else(|| {
-        IggyDashboardServerError::NotFound(format!("Benchmark '{}' not found", uuid_str))
+        IggyBenchDashboardServerError::NotFound(format!("Benchmark '{}' not found", uuid_str))
     })?;
 
     let json_content = std::fs::read_to_string(&json_path).map_err(|e| {
-        IggyDashboardServerError::NotFound(format!(
+        IggyBenchDashboardServerError::NotFound(format!(
             "Report file not found for '{}': {}",
             json_path.display(),
             e
@@ -162,7 +162,7 @@ pub async fn get_benchmark_report_light(
             warn!(
                 "{client_addr}: Invalid UUID format in light benchmark request: '{uuid_str}', error: {e}",
             );
-            return Err(IggyDashboardServerError::InvalidUuid(format!(
+            return Err(IggyBenchDashboardServerError::InvalidUuid(format!(
                 "Invalid UUID format: '{}'",
                 uuid_str
             )));
@@ -182,7 +182,7 @@ pub async fn get_benchmark_report_light(
                 "{}: Light benchmark report not found for uuid '{}'",
                 client_addr, uuid_str
             );
-            Err(IggyDashboardServerError::NotFound(format!(
+            Err(IggyBenchDashboardServerError::NotFound(format!(
                 "Benchmark '{}' not found",
                 uuid_str
             )))
@@ -207,7 +207,7 @@ pub async fn get_benchmark_trend(
         .cache
         .get_benchmark_trend_data(&params_identifier, &hardware)
         .ok_or_else(|| {
-            IggyDashboardServerError::NotFound(format!(
+            IggyBenchDashboardServerError::NotFound(format!(
                 "Trend data not found for hardware '{}' with params identifier '{}'",
                 hardware, params_identifier
             ))
@@ -240,7 +240,9 @@ pub async fn get_test_artifacts(
         Ok(uuid) => uuid,
         Err(_) => {
             warn!("{client_addr}: Invalid UUID format in test artifacts request: '{uuid_str}'",);
-            return Err(IggyDashboardServerError::InvalidUuid(uuid_str.to_string()));
+            return Err(IggyBenchDashboardServerError::InvalidUuid(
+                uuid_str.to_string(),
+            ));
         }
     };
 
@@ -252,7 +254,7 @@ pub async fn get_test_artifacts(
                 "{}: Benchmark not found for uuid '{}'",
                 client_addr, uuid_str
             );
-            return Err(IggyDashboardServerError::NotFound(format!(
+            return Err(IggyBenchDashboardServerError::NotFound(format!(
                 "Benchmark '{}' not found",
                 uuid_str
             )));
@@ -271,13 +273,16 @@ pub async fn get_test_artifacts(
         // Walk through all files in the directory
         for entry in WalkDir::new(&artifacts_dir) {
             let entry = entry.map_err(|e| {
-                IggyDashboardServerError::InternalError(format!("Error walking directory: {}", e))
+                IggyBenchDashboardServerError::InternalError(format!(
+                    "Error walking directory: {}",
+                    e
+                ))
             })?;
 
             if entry.file_type().is_file() {
                 let path = entry.path();
                 let relative_path = path.strip_prefix(&artifacts_dir).map_err(|e| {
-                    IggyDashboardServerError::InternalError(format!(
+                    IggyBenchDashboardServerError::InternalError(format!(
                         "Error creating relative path: {}",
                         e
                     ))
@@ -289,17 +294,20 @@ pub async fn get_test_artifacts(
                     options.clone(),
                 )
                 .map_err(|e| {
-                    IggyDashboardServerError::InternalError(format!(
+                    IggyBenchDashboardServerError::InternalError(format!(
                         "Error adding file to zip: {}",
                         e
                     ))
                 })?;
 
                 let mut file = std::fs::File::open(path).map_err(|e| {
-                    IggyDashboardServerError::InternalError(format!("Error opening file: {}", e))
+                    IggyBenchDashboardServerError::InternalError(format!(
+                        "Error opening file: {}",
+                        e
+                    ))
                 })?;
                 std::io::copy(&mut file, &mut zip).map_err(|e| {
-                    IggyDashboardServerError::InternalError(format!(
+                    IggyBenchDashboardServerError::InternalError(format!(
                         "Error copying file to zip: {}",
                         e
                     ))
@@ -309,7 +317,10 @@ pub async fn get_test_artifacts(
 
         // Finish zip file
         zip.finish().map_err(|e| {
-            IggyDashboardServerError::InternalError(format!("Error finalizing zip file: {}", e))
+            IggyBenchDashboardServerError::InternalError(format!(
+                "Error finalizing zip file: {}",
+                e
+            ))
         })?;
     } // zip is dropped here
 

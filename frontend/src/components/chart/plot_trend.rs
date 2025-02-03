@@ -4,13 +4,13 @@ use charming::{
     theme::Theme,
     Chart, Echarts, WasmRenderer,
 };
-use iggy_benchmark_report::{
+use iggy_bench_dashboard_shared::BenchmarkReportLight;
+use iggy_bench_report::{
     group_metrics_kind::GroupMetricsKind,
     group_metrics_summary::BenchmarkGroupMetricsSummary,
     params::BenchmarkParams,
     plotting::{chart::IggyChart, chart_kind::ChartKind},
 };
-use shared::BenchmarkReportLight;
 
 fn trend_chart_title(params: &BenchmarkParams, kind: ChartKind) -> String {
     if let Some(remark) = &params.remark {

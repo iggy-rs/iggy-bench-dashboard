@@ -29,10 +29,10 @@ jobs:
           trunk build --release
 
       - name: Build Server
-        run: cargo build --release --package iggy-benchmarks-dashboard-server
+        run: cargo build --release --package iggy-bench-dashboard-server
 
       - name: Build Runner
-        run: cargo build --release --package iggy-benchmarks-runner
+        run: cargo build --release --package iggy-bench-runner
 
   test:
     name: Test

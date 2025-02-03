@@ -2,17 +2,18 @@ use super::logo::Logo;
 use crate::components::selectors::benchmark_selector::BenchmarkSelector;
 use crate::components::selectors::gitref_selector::GitrefSelector;
 use crate::components::selectors::hardware_selector::HardwareSelector;
-use crate::components::view_mode_toggle::ViewModeToggle;
+use crate::components::selectors::view_mode_selector::ViewModeSelector;
 use crate::state::benchmark::{use_benchmark, BenchmarkAction};
 use crate::state::gitref::use_gitref;
 use crate::state::view_mode::{use_view_mode, ViewMode};
-use iggy_benchmark_report::benchmark_kind::BenchmarkKind;
+use iggy_bench_report::benchmark_kind::BenchmarkKind;
 use yew::prelude::*;
 
 #[derive(Clone, PartialEq)]
 pub enum BenchmarkTab {
-    Regular,
-    ConsumerGroup,
+    Pinned,
+    Balanced,
+    EndToEnd,
 }
 
 #[derive(Properties, PartialEq)]
@@ -26,106 +27,114 @@ pub fn sidebar(props: &SidebarProps) -> Html {
     let view_mode_ctx = use_view_mode();
     let benchmark_ctx = use_benchmark();
     let is_trend_view = matches!(view_mode_ctx.mode, ViewMode::GitrefTrend);
-    let active_tab = use_state(|| BenchmarkTab::Regular);
+    let active_tab = use_state(|| BenchmarkTab::Pinned);
 
-    let has_regular_benchmarks = benchmark_ctx.state.entries.values().any(|benchmarks| {
+    let has_pinned_benchmarks = benchmark_ctx.state.entries.values().any(|benchmarks| {
         benchmarks.iter().any(|b| {
             matches!(
                 b.params.benchmark_kind,
-                BenchmarkKind::Send | BenchmarkKind::Poll | BenchmarkKind::SendAndPoll
+                BenchmarkKind::PinnedProducer
+                    | BenchmarkKind::PinnedConsumer
+                    | BenchmarkKind::PinnedProducerAndConsumer
             )
         })
     });
 
-    let has_consumer_group_benchmarks = benchmark_ctx.state.entries.values().any(|benchmarks| {
+    let has_balanced_benchmarks = benchmark_ctx.state.entries.values().any(|benchmarks| {
         benchmarks.iter().any(|b| {
             matches!(
                 b.params.benchmark_kind,
-                BenchmarkKind::ConsumerGroupSend
-                    | BenchmarkKind::ConsumerGroupPoll
-                    | BenchmarkKind::ConsumerGroupSendAndPoll
+                BenchmarkKind::BalancedProducer
+                    | BenchmarkKind::BalancedConsumerGroup
+                    | BenchmarkKind::BalancedProducerAndConsumerGroup
             )
         })
     });
 
-    // Switch to Regular tab if Consumer Group benchmarks become unavailable
+    let has_end_to_end_benchmarks = benchmark_ctx.state.entries.values().any(|benchmarks| {
+        benchmarks.iter().any(|b| {
+            matches!(
+                b.params.benchmark_kind,
+                BenchmarkKind::EndToEndProducingConsumer
+            )
+        })
+    });
+
+    fn get_default_kind_for_tab(tab: &BenchmarkTab) -> BenchmarkKind {
+        match tab {
+            BenchmarkTab::Pinned => BenchmarkKind::PinnedProducer,
+            BenchmarkTab::Balanced => BenchmarkKind::BalancedProducer,
+            BenchmarkTab::EndToEnd => BenchmarkKind::EndToEndProducingConsumer,
+        }
+    }
+
+    // Switch to another available tab if current becomes unavailable
     {
         let active_tab = active_tab.clone();
         let benchmark_ctx = benchmark_ctx.clone();
         use_effect_with(
-            (has_regular_benchmarks, has_consumer_group_benchmarks),
-            move |(has_regular, has_consumer_group)| {
-                if *active_tab == BenchmarkTab::ConsumerGroup && !has_consumer_group && *has_regular
-                {
-                    // Switch to Regular tab
-                    active_tab.set(BenchmarkTab::Regular);
+            (
+                has_pinned_benchmarks,
+                has_balanced_benchmarks,
+                has_end_to_end_benchmarks,
+            ),
+            move |(has_pinned, has_balanced, has_end_to_end)| {
+                let cleanup = || ();
 
-                    // Find and select first available regular benchmark kind
-                    let kinds = vec![
-                        BenchmarkKind::Send,
-                        BenchmarkKind::Poll,
-                        BenchmarkKind::SendAndPoll,
-                    ];
-                    if let Some(kind) = kinds
-                        .into_iter()
-                        .find(|kind| benchmark_ctx.state.entries.contains_key(kind))
-                    {
+                let current_unavailable = match *active_tab {
+                    BenchmarkTab::Pinned => !has_pinned,
+                    BenchmarkTab::Balanced => !has_balanced,
+                    BenchmarkTab::EndToEnd => !has_end_to_end,
+                };
+
+                if current_unavailable {
+                    // Try to switch to first available tab
+                    if *has_pinned {
+                        active_tab.set(BenchmarkTab::Pinned);
                         benchmark_ctx
                             .dispatch
-                            .emit(BenchmarkAction::SelectBenchmarkKind(kind));
+                            .emit(BenchmarkAction::SelectBenchmarkKind(
+                                get_default_kind_for_tab(&BenchmarkTab::Pinned),
+                            ));
+                    } else if *has_balanced {
+                        active_tab.set(BenchmarkTab::Balanced);
+                        benchmark_ctx
+                            .dispatch
+                            .emit(BenchmarkAction::SelectBenchmarkKind(
+                                get_default_kind_for_tab(&BenchmarkTab::Balanced),
+                            ));
+                    } else if *has_end_to_end {
+                        active_tab.set(BenchmarkTab::EndToEnd);
+                        benchmark_ctx
+                            .dispatch
+                            .emit(BenchmarkAction::SelectBenchmarkKind(
+                                get_default_kind_for_tab(&BenchmarkTab::EndToEnd),
+                            ));
                     }
                 }
-                || ()
+
+                cleanup
             },
         );
     }
-
-    // Function to get the first available benchmark kind for a tab
-    let get_first_available_kind = {
-        let benchmark_ctx = benchmark_ctx.clone();
-        move |is_consumer_group: bool| -> Option<BenchmarkKind> {
-            let kinds = if is_consumer_group {
-                vec![
-                    BenchmarkKind::ConsumerGroupSend,
-                    BenchmarkKind::ConsumerGroupPoll,
-                    BenchmarkKind::ConsumerGroupSendAndPoll,
-                ]
-            } else {
-                vec![
-                    BenchmarkKind::Send,
-                    BenchmarkKind::Poll,
-                    BenchmarkKind::SendAndPoll,
-                ]
-            };
-
-            kinds
-                .into_iter()
-                .find(|kind| benchmark_ctx.state.entries.contains_key(kind))
-        }
-    };
 
     let on_tab_click = {
         let active_tab = active_tab.clone();
         let benchmark_ctx = benchmark_ctx.clone();
         Callback::from(move |tab: BenchmarkTab| {
-            match tab {
-                BenchmarkTab::Regular if has_regular_benchmarks => {
-                    if let Some(kind) = get_first_available_kind(false) {
-                        benchmark_ctx
-                            .dispatch
-                            .emit(BenchmarkAction::SelectBenchmarkKind(kind));
-                        active_tab.set(tab);
-                    }
-                }
-                BenchmarkTab::ConsumerGroup if has_consumer_group_benchmarks => {
-                    if let Some(kind) = get_first_available_kind(true) {
-                        benchmark_ctx
-                            .dispatch
-                            .emit(BenchmarkAction::SelectBenchmarkKind(kind));
-                        active_tab.set(tab);
-                    }
-                }
-                _ => (), // Do nothing if the tab is inactive
+            let should_switch = match tab {
+                BenchmarkTab::Pinned => has_pinned_benchmarks,
+                BenchmarkTab::Balanced => has_balanced_benchmarks,
+                BenchmarkTab::EndToEnd => has_end_to_end_benchmarks,
+            };
+
+            if should_switch {
+                benchmark_ctx
+                    .dispatch
+                    .emit(BenchmarkAction::SelectBenchmarkKind(
+                        get_default_kind_for_tab(&tab),
+                    ));
+                active_tab.set(tab);
             }
         })
     };
@@ -134,7 +143,7 @@ pub fn sidebar(props: &SidebarProps) -> Html {
         <div class="sidebar">
             <Logo />
             <HardwareSelector />
-            <ViewModeToggle />
+            <ViewModeSelector />
 
             if !is_trend_view {
                 <GitrefSelector
@@ -150,39 +159,57 @@ pub fn sidebar(props: &SidebarProps) -> Html {
                     <button
                         class={classes!(
                             "tab-button",
-                            (*active_tab == BenchmarkTab::Regular).then_some("active"),
-                            (!has_regular_benchmarks).then_some("inactive")
+                            (*active_tab == BenchmarkTab::Pinned).then_some("active"),
+                            (!has_pinned_benchmarks).then_some("inactive")
                         )}
-                        disabled={!has_regular_benchmarks}
+                        disabled={!has_pinned_benchmarks}
                         onclick={let on_tab_click = on_tab_click.clone();
-                                move |_| on_tab_click.emit(BenchmarkTab::Regular)}
+                                move |_| on_tab_click.emit(BenchmarkTab::Pinned)}
                     >
-                        { "Regular" }
+                        { "Pinned" }
                     </button>
                     <button
                         class={classes!(
                             "tab-button",
-                            (*active_tab == BenchmarkTab::ConsumerGroup).then_some("active"),
-                            (!has_consumer_group_benchmarks).then_some("inactive")
+                            (*active_tab == BenchmarkTab::Balanced).then_some("active"),
+                            (!has_balanced_benchmarks).then_some("inactive")
                         )}
-                        disabled={!has_consumer_group_benchmarks}
+                        disabled={!has_balanced_benchmarks}
                         onclick={let on_tab_click = on_tab_click.clone();
-                                move |_| on_tab_click.emit(BenchmarkTab::ConsumerGroup)}
+                                move |_| on_tab_click.emit(BenchmarkTab::Balanced)}
                     >
-                        { "Consumer Group" }
+                        { "Balanced" }
+                    </button>
+                    <button
+                        class={classes!(
+                            "tab-button",
+                            (*active_tab == BenchmarkTab::EndToEnd).then_some("active"),
+                            (!has_end_to_end_benchmarks).then_some("inactive")
+                        )}
+                        disabled={!has_end_to_end_benchmarks}
+                        onclick={let on_tab_click = on_tab_click.clone();
+                                move |_| on_tab_click.emit(BenchmarkTab::EndToEnd)}
+                    >
+                        { "End to End" }
                     </button>
                 </div>
                 <div class={classes!(
                     "tab-content",
-                    (*active_tab == BenchmarkTab::Regular).then_some("active")
+                    (*active_tab == BenchmarkTab::Pinned).then_some("active")
                 )}>
-                    <BenchmarkSelector is_consumer_group={false} />
+                    <BenchmarkSelector kind={get_default_kind_for_tab(&BenchmarkTab::Pinned)} />
                 </div>
                 <div class={classes!(
                     "tab-content",
-                    (*active_tab == BenchmarkTab::ConsumerGroup).then_some("active")
+                    (*active_tab == BenchmarkTab::Balanced).then_some("active")
                 )}>
-                    <BenchmarkSelector is_consumer_group={true} />
+                    <BenchmarkSelector kind={get_default_kind_for_tab(&BenchmarkTab::Balanced)} />
+                </div>
+                <div class={classes!(
+                    "tab-content",
+                    (*active_tab == BenchmarkTab::EndToEnd).then_some("active")
+                )}>
+                    <BenchmarkSelector kind={get_default_kind_for_tab(&BenchmarkTab::EndToEnd)} />
                 </div>
             </div>
         </div>

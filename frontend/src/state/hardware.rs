@@ -1,4 +1,4 @@
-use iggy_benchmark_report::hardware::BenchmarkHardware;
+use iggy_bench_report::hardware::BenchmarkHardware;
 use std::rc::Rc;
 use yew::prelude::*;
 

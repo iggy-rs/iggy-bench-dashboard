@@ -26,7 +26,7 @@ fi
 
 # Start server in background
 echo "Starting server..."
-(cd "$(dirname "$0")/.." && cargo run --bin iggy-benchmarks-dashboard-server) &
+(cd "$(dirname "$0")/.." && cargo run --bin iggy-bench-dashboard-server) &
 
 # Wait a bit for server to start
 sleep 1

@@ -1,7 +1,7 @@
 # Build stage
 FROM rust:1.83-slim-bookworm as builder
 
-WORKDIR /usr/src/iggy-benchmarks-dashboard
+WORKDIR /usr/src/iggy-bench-dashboard
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -28,7 +28,7 @@ COPY . .
 RUN cd frontend && trunk build --release
 
 # Build the server with release profile
-RUN cargo build --release --package iggy-benchmarks-dashboard-server
+RUN cargo build --release --package iggy-bench-dashboard-server
 
 # Runtime stage
 FROM debian:bookworm-slim
@@ -44,8 +44,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the built binary and frontend files
-COPY --from=builder /usr/src/iggy-benchmarks-dashboard/target/release/iggy-benchmarks-dashboard-server /app/
-COPY --from=builder /usr/src/iggy-benchmarks-dashboard/frontend/dist /app/frontend/dist
+COPY --from=builder /usr/src/iggy-bench-dashboard/target/release/iggy-bench-dashboard-server /app/
+COPY --from=builder /usr/src/iggy-bench-dashboard/frontend/dist /app/frontend/dist
 
 # Create data directory and non-root user
 RUN groupadd -r iggy && \

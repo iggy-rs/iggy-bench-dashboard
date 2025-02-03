@@ -1,7 +1,7 @@
 use super::BenchmarkCache;
 use chrono::{self, DateTime, FixedOffset};
-use iggy_benchmark_report::hardware::BenchmarkHardware;
-use shared::BenchmarkReportLight;
+use iggy_bench_dashboard_shared::BenchmarkReportLight;
+use iggy_bench_report::hardware::BenchmarkHardware;
 use std::collections::{HashMap, HashSet};
 
 impl BenchmarkCache {

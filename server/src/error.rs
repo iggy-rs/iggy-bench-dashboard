@@ -3,7 +3,7 @@ use serde_json::json;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum IggyDashboardServerError {
+pub enum IggyBenchDashboardServerError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
     #[error("Invalid path: {0}")]
@@ -18,10 +18,10 @@ pub enum IggyDashboardServerError {
     InternalError(String),
 }
 
-impl ResponseError for IggyDashboardServerError {
+impl ResponseError for IggyBenchDashboardServerError {
     fn error_response(&self) -> HttpResponse {
         match self {
-            IggyDashboardServerError::NotFound(msg) => {
+            IggyBenchDashboardServerError::NotFound(msg) => {
                 HttpResponse::NotFound().json(json!({ "error": msg }))
             }
             _ => HttpResponse::InternalServerError().json(json!({ "error": self.to_string() })),

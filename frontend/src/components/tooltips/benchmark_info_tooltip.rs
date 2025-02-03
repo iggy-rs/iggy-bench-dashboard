@@ -1,6 +1,6 @@
 use crate::state::view_mode::ViewMode;
 use gloo::timers::callback::Timeout;
-use shared::BenchmarkReportLight;
+use iggy_bench_dashboard_shared::BenchmarkReportLight;
 use web_sys::window;
 use yew::prelude::*;
 
@@ -45,7 +45,7 @@ pub fn benchmark_info_tooltip(props: &BenchmarkInfoTooltipProps) -> Html {
     html! {
         <div class="benchmark-info-tooltip">
             <div class="tooltip-section">
-                <h4>{"Hardware"}</h4>
+                <h4>{"Benchmark Client Information"}</h4>
                 <div class="tooltip-content">
                     <p><strong>{"CPU: "}</strong>{&hardware.cpu_name}</p>
                     <p><strong>{"Cores: "}</strong>{hardware.cpu_cores}</p>
@@ -74,11 +74,16 @@ pub fn benchmark_info_tooltip(props: &BenchmarkInfoTooltipProps) -> Html {
                         params.producers,
                         params.consumers
                     )}</p>
-                    <p><strong>{"Config: "}</strong>{format!("{} streams, {} topics, {} partitions per topic",
-                        params.streams,
-                        params.streams,
-                        params.partitions
-                    )}</p>
+                    <p><strong>{"Config: "}</strong>{
+                        if params.partitions == 0 {
+                            format!("{} streams, 1 topics", params.streams)
+                        } else {
+                            format!("{} streams, 1 topics, {} partitions per topic",
+                                params.streams,
+                                params.partitions
+                            )
+                        }
+                    }</p>
                     {if !is_trend_view {
                         html! {
                             <>

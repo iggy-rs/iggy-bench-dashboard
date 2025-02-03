@@ -1,11 +1,11 @@
-use crate::error::IggyDashboardServerError;
+use crate::error::IggyBenchDashboardServerError;
 use clap::Parser;
 use serde::Deserialize;
 use std::path::PathBuf;
 
 #[derive(Debug, Deserialize, Parser)]
 #[command(author, version, about, long_about = None)]
-pub struct IggyDashboardServerConfig {
+pub struct IggyBenchDashboardServerConfig {
     /// Server host address
     #[arg(long, default_value = "127.0.0.1")]
     pub host: String,
@@ -27,20 +27,20 @@ pub struct IggyDashboardServerConfig {
     pub cors_origins: String,
 }
 
-impl IggyDashboardServerConfig {
+impl IggyBenchDashboardServerConfig {
     pub fn parse() -> Self {
         Self::parse_from(std::env::args())
     }
 
-    pub fn validate(&self) -> Result<(), IggyDashboardServerError> {
+    pub fn validate(&self) -> Result<(), IggyBenchDashboardServerError> {
         if !self.results_dir.exists() {
-            return Err(IggyDashboardServerError::InvalidPath(format!(
+            return Err(IggyBenchDashboardServerError::InvalidPath(format!(
                 "Results directory does not exist: {}",
                 self.results_dir.display()
             )));
         }
         if !self.results_dir.is_dir() {
-            return Err(IggyDashboardServerError::InvalidPath(format!(
+            return Err(IggyBenchDashboardServerError::InvalidPath(format!(
                 "Results path is not a directory: {}",
                 self.results_dir.display()
             )));

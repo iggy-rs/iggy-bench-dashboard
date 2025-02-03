@@ -18,11 +18,11 @@ const OWNER: &str = "iggy-rs";
 const REPO: &str = "iggy";
 const WORKFLOW_FILE: &str = "performance.yml";
 
-pub struct IggyDashboardGithubClient {
+pub struct IggyBenchDashboardGithubClient {
     octocrab: Octocrab,
 }
 
-impl IggyDashboardGithubClient {
+impl IggyBenchDashboardGithubClient {
     pub fn new() -> Result<Self> {
         let token = std::env::var("GITHUB_TOKEN").context("GITHUB_TOKEN not set")?;
         let octocrab = Octocrab::builder().personal_token(token).build()?;

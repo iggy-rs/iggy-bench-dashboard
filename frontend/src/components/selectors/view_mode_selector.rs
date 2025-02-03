@@ -1,7 +1,7 @@
 use crate::state::view_mode::{use_view_mode, ViewMode, ViewModeAction};
 use yew::prelude::*;
 
-#[function_component(ViewModeToggle)]
+#[function_component(ViewModeSelector)]
 pub fn view_mode_toggle() -> Html {
     let view_mode_ctx = use_view_mode();
     let is_trend_view = matches!(view_mode_ctx.mode, ViewMode::GitrefTrend);

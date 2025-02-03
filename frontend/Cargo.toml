@@ -1,5 +1,5 @@
 [package]
-name = "iggy-benchmarks-dashboard-frontend"
+name = "iggy-bench-dashboard-frontend"
 license = "Apache-2.0"
 version.workspace = true
 edition.workspace = true
@@ -7,9 +7,9 @@ edition.workspace = true
 [dependencies]
 charming = { version = "0.4.0", features = ["wasm"] }
 gloo = "0.11"
-iggy-benchmark-report = { workspace = true }
+iggy-bench-report = { workspace = true }
 js-sys = "0.3"
-shared = { path = "../shared" }
+iggy-bench-dashboard-shared = { path = "../shared" }
 thiserror = "2.0"
 wasm-bindgen = "0.2"
 web-sys = { version = "0.3", features = [

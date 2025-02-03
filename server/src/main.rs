@@ -12,7 +12,7 @@ use actix_web::{
     web, App, HttpServer,
 };
 use cache::BenchmarkCache;
-use config::IggyDashboardServerConfig;
+use config::IggyBenchDashboardServerConfig;
 use handlers::AppState;
 use std::sync::Arc;
 use tracing::{error, info};
@@ -36,7 +36,7 @@ async fn index() -> actix_web::Result<NamedFile> {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // Load configuration first
-    let config = IggyDashboardServerConfig::parse();
+    let config = IggyBenchDashboardServerConfig::parse();
 
     // Initialize tracing
     let env_filter =

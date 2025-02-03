@@ -4,7 +4,7 @@ use crate::components::selectors::measurement_type_selector::MeasurementType;
 use charming::theme::Theme;
 use charming::{Echarts, WasmRenderer};
 use gloo::console::log;
-use iggy_benchmark_report::report::BenchmarkReport;
+use iggy_bench_report::report::BenchmarkReport;
 use uuid::Uuid;
 use yew::platform::spawn_local;
 use yew::prelude::*;
@@ -79,10 +79,10 @@ pub fn single_chart(props: &SingleChartProps) -> Html {
                 if !is_loading {
                     let chart = match measurement_type {
                         MeasurementType::Latency => {
-                            iggy_benchmark_report::create_latency_chart(data, config.is_dark)
+                            iggy_bench_report::create_latency_chart(data, config.is_dark)
                         }
                         MeasurementType::Throughput => {
-                            iggy_benchmark_report::create_throughput_chart(data, config.is_dark)
+                            iggy_bench_report::create_throughput_chart(data, config.is_dark)
                         }
                     };
 
