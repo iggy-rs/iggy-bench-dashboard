@@ -1,8 +1,10 @@
 use crate::api;
-use crate::components::benchmark_info_toggle::BenchmarkInfoToggle;
-use crate::components::benchmark_info_tooltip::BenchmarkInfoTooltip;
 use crate::components::selectors::measurement_type_selector::MeasurementType;
-use crate::components::theme_toggle::ThemeToggle;
+use crate::components::theme::theme_toggle::ThemeToggle;
+use crate::components::tooltips::benchmark_info_toggle::BenchmarkInfoToggle;
+use crate::components::tooltips::benchmark_info_tooltip::BenchmarkInfoTooltip;
+use crate::components::tooltips::server_stats_toggle::ServerStatsToggle;
+use crate::components::tooltips::server_stats_tooltip::ServerStatsTooltip;
 use crate::state::benchmark::use_benchmark;
 use crate::state::view_mode::use_view_mode;
 use yew::prelude::*;
@@ -22,6 +24,7 @@ pub struct TopBarProps {
 pub fn topbar(props: &TopBarProps) -> Html {
     let benchmark_ctx = use_benchmark();
     let view_mode_ctx = use_view_mode();
+    let is_server_stats_visible = use_state(|| false);
 
     let on_download_artifacts = {
         let benchmark_ctx = benchmark_ctx.clone();
@@ -29,6 +32,13 @@ pub fn topbar(props: &TopBarProps) -> Html {
             if let Some(benchmark) = &benchmark_ctx.state.selected_benchmark {
                 api::download_test_artifacts(&benchmark.uuid);
             }
+        })
+    };
+
+    let on_server_stats_toggle = {
+        let is_server_stats_visible = is_server_stats_visible.clone();
+        Callback::from(move |_| {
+            is_server_stats_visible.set(!*is_server_stats_visible);
         })
     };
 
@@ -55,6 +65,25 @@ pub fn topbar(props: &TopBarProps) -> Html {
                                         <line x1="12" y1="15" x2="12" y2="3"/>
                                     </svg>
                                 </button>
+                                <div class="info-container">
+                                    <ServerStatsToggle
+                                        is_visible={*is_server_stats_visible}
+                                        on_toggle={on_server_stats_toggle.clone()}
+                                    />
+                                    {
+                                        if *is_server_stats_visible {
+                                            html! {
+                                                <ServerStatsTooltip
+                                                    benchmark_report={benchmark_ctx.state.selected_benchmark.clone()}
+                                                    visible={true}
+                                                    view_mode={view_mode_ctx.mode.clone()}
+                                                />
+                                            }
+                                        } else {
+                                            html! {}
+                                        }
+                                    }
+                                </div>
                                 <div class="info-container">
                                     <BenchmarkInfoToggle
                                         is_visible={props.is_benchmark_tooltip_visible}

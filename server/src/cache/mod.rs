@@ -1,6 +1,6 @@
-use crate::error::IggyDashboardServerError;
+use crate::error::IggyBenchDashboardServerError;
 use dashmap::{DashMap, DashSet};
-use shared::BenchmarkReportLight;
+use iggy_bench_dashboard_shared::BenchmarkReportLight;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
@@ -14,7 +14,7 @@ mod watcher;
 
 pub use watcher::CacheWatcher;
 
-pub type Result<T> = std::result::Result<T, IggyDashboardServerError>;
+pub type Result<T> = std::result::Result<T, IggyBenchDashboardServerError>;
 pub type HardwareIdentifier = String;
 pub type Gitref = String;
 

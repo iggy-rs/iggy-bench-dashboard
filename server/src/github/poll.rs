@@ -1,6 +1,6 @@
 
 async fn poll_github(&self, branch: &str, interval_seconds: u64) -> Result<()> {
-    let gh = IggyDashboardGithubClient::new()?;
+    let gh = IggyBenchDashboardGithubClient::new()?;
 
     info!("Polling GitHub for successful workflow runs on branch {branch} every {interval_seconds} seconds...");
 
@@ -12,7 +12,7 @@ async fn poll_github(&self, branch: &str, interval_seconds: u64) -> Result<()> {
             let sha1 = &workflow.head_sha;
 
             let gitref =
-                if let Some(tag) = IggyDashboardGithubClient::get_tag_for_commit(&tags, sha1) {
+                if let Some(tag) = IggyBenchDashboardGithubClient::get_tag_for_commit(&tags, sha1) {
                     tag.name
                 } else {
                     sha1.clone().chars().take(8).collect()

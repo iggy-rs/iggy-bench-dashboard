@@ -1,10 +1,10 @@
 use crate::config::get_api_base_url;
-use crate::error::{IggyDashboardError, Result};
+use crate::error::{IggyBenchDashboardError, Result};
 use gloo::console::log;
 use gloo::net::http::Request;
-use iggy_benchmark_report::hardware::BenchmarkHardware;
-use iggy_benchmark_report::report::BenchmarkReport;
-use shared::BenchmarkReportLight;
+use iggy_bench_dashboard_shared::BenchmarkReportLight;
+use iggy_bench_report::hardware::BenchmarkHardware;
+use iggy_bench_report::report::BenchmarkReport;
 use std::sync::atomic::{AtomicBool, Ordering};
 use uuid::Uuid;
 use web_sys::window;
@@ -22,10 +22,10 @@ async fn check_server_health() -> Result<()> {
     let resp = Request::get(&url)
         .send()
         .await
-        .map_err(|e| IggyDashboardError::HealthCheck(format!("Network error: {}", e)))?;
+        .map_err(|e| IggyBenchDashboardError::HealthCheck(format!("Network error: {}", e)))?;
 
     if !resp.ok() {
-        return Err(IggyDashboardError::HealthCheck(format!(
+        return Err(IggyBenchDashboardError::HealthCheck(format!(
             "Server returned {}",
             resp.status()
         )));
@@ -43,10 +43,10 @@ pub async fn fetch_hardware_configurations() -> Result<Vec<BenchmarkHardware>> {
     let resp = Request::get(&url)
         .send()
         .await
-        .map_err(|e| IggyDashboardError::Network(e.to_string()))?;
+        .map_err(|e| IggyBenchDashboardError::Network(e.to_string()))?;
 
     if !resp.ok() {
-        return Err(IggyDashboardError::Server(format!(
+        return Err(IggyBenchDashboardError::Server(format!(
             "Failed to fetch hardware configurations: {}",
             resp.status()
         )));
@@ -54,7 +54,7 @@ pub async fn fetch_hardware_configurations() -> Result<Vec<BenchmarkHardware>> {
 
     resp.json()
         .await
-        .map_err(|e| IggyDashboardError::Parse(e.to_string()))
+        .map_err(|e| IggyBenchDashboardError::Parse(e.to_string()))
 }
 
 pub async fn fetch_gitrefs_for_hardware(hardware: &str) -> Result<Vec<String>> {
@@ -65,10 +65,10 @@ pub async fn fetch_gitrefs_for_hardware(hardware: &str) -> Result<Vec<String>> {
     let resp = Request::get(&url)
         .send()
         .await
-        .map_err(|e| IggyDashboardError::Network(e.to_string()))?;
+        .map_err(|e| IggyBenchDashboardError::Network(e.to_string()))?;
 
     if !resp.ok() {
-        return Err(IggyDashboardError::Server(format!(
+        return Err(IggyBenchDashboardError::Server(format!(
             "Failed to fetch git refs: {}",
             resp.status()
         )));
@@ -76,7 +76,7 @@ pub async fn fetch_gitrefs_for_hardware(hardware: &str) -> Result<Vec<String>> {
 
     resp.json()
         .await
-        .map_err(|e| IggyDashboardError::Parse(e.to_string()))
+        .map_err(|e| IggyBenchDashboardError::Parse(e.to_string()))
 }
 
 pub async fn fetch_benchmarks_for_hardware_and_gitref(
@@ -95,10 +95,10 @@ pub async fn fetch_benchmarks_for_hardware_and_gitref(
     let resp = Request::get(&url)
         .send()
         .await
-        .map_err(|e| IggyDashboardError::Network(e.to_string()))?;
+        .map_err(|e| IggyBenchDashboardError::Network(e.to_string()))?;
 
     if !resp.ok() {
-        return Err(IggyDashboardError::Server(format!(
+        return Err(IggyBenchDashboardError::Server(format!(
             "Failed to fetch benchmarks: {}",
             resp.status()
         )));
@@ -106,7 +106,7 @@ pub async fn fetch_benchmarks_for_hardware_and_gitref(
 
     resp.json()
         .await
-        .map_err(|e| IggyDashboardError::Parse(e.to_string()))
+        .map_err(|e| IggyBenchDashboardError::Parse(e.to_string()))
 }
 
 pub async fn fetch_benchmark_report_full(uuid: &Uuid) -> Result<BenchmarkReport> {
@@ -117,10 +117,10 @@ pub async fn fetch_benchmark_report_full(uuid: &Uuid) -> Result<BenchmarkReport>
     let resp = Request::get(&url)
         .send()
         .await
-        .map_err(|e| IggyDashboardError::Network(e.to_string()))?;
+        .map_err(|e| IggyBenchDashboardError::Network(e.to_string()))?;
 
     if !resp.ok() {
-        return Err(IggyDashboardError::Server(format!(
+        return Err(IggyBenchDashboardError::Server(format!(
             "Failed to fetch benchmark report: {}",
             resp.status()
         )));
@@ -128,7 +128,7 @@ pub async fn fetch_benchmark_report_full(uuid: &Uuid) -> Result<BenchmarkReport>
 
     resp.json()
         .await
-        .map_err(|e| IggyDashboardError::Parse(e.to_string()))
+        .map_err(|e| IggyBenchDashboardError::Parse(e.to_string()))
 }
 
 pub async fn fetch_benchmark_trend(
@@ -147,10 +147,10 @@ pub async fn fetch_benchmark_trend(
     let resp = Request::get(&url)
         .send()
         .await
-        .map_err(|e| IggyDashboardError::Network(e.to_string()))?;
+        .map_err(|e| IggyBenchDashboardError::Network(e.to_string()))?;
 
     if !resp.ok() {
-        return Err(IggyDashboardError::Server(format!(
+        return Err(IggyBenchDashboardError::Server(format!(
             "Failed to fetch benchmark trend: {}",
             resp.status()
         )));
@@ -158,7 +158,7 @@ pub async fn fetch_benchmark_trend(
 
     resp.json()
         .await
-        .map_err(|e| IggyDashboardError::Parse(e.to_string()))
+        .map_err(|e| IggyBenchDashboardError::Parse(e.to_string()))
 }
 
 pub fn download_test_artifacts(uuid: &Uuid) {

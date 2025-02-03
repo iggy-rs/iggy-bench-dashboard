@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: iggyrs/iggy-benchmarks-dashboard
+  IMAGE_NAME: iggyrs/iggy-bench-dashboard
 
 jobs:
   docker:

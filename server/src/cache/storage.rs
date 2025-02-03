@@ -1,5 +1,5 @@
 use super::BenchmarkCache;
-use shared::BenchmarkReportLight;
+use iggy_bench_dashboard_shared::BenchmarkReportLight;
 use std::path::PathBuf;
 use uuid::Uuid;
 

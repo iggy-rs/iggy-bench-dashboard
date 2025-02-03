@@ -5,10 +5,12 @@ mod error;
 mod state;
 
 use crate::{
-    components::{app_content::AppContent, footer::Footer, theme_provider::ThemeProvider},
+    components::{app_content::AppContent, footer::Footer},
     state::{hardware::HardwareProvider, view_mode::ViewModeProvider},
 };
-use components::selectors::measurement_type_selector::MeasurementType;
+use components::{
+    selectors::measurement_type_selector::MeasurementType, theme::theme_provider::ThemeProvider,
+};
 use state::{benchmark::BenchmarkProvider, gitref::GitrefProvider};
 use yew::prelude::*;
 

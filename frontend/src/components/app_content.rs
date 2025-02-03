@@ -65,8 +65,6 @@ fn use_load_gitrefs(
                             .emit(GitrefAction::SetGitrefs(vers.clone()));
 
                         if !vers.is_empty() {
-                            // Always use the first version when switching hardware
-                            // since benchmarks are hardware-specific
                             let selected_gitref = vers[0].clone();
                             log!("Using first available version for new hardware");
 
@@ -76,7 +74,6 @@ fn use_load_gitrefs(
                                     selected_gitref.clone(),
                                 )));
 
-                            // Always fetch benchmarks for new hardware
                             match api::fetch_benchmarks_for_hardware_and_gitref(
                                 &hardware,
                                 &selected_gitref,
@@ -84,9 +81,11 @@ fn use_load_gitrefs(
                             .await
                             {
                                 Ok(benchmarks) => {
-                                    benchmark_ctx
-                                        .dispatch
-                                        .emit(BenchmarkAction::SetBenchmarksForGitref(benchmarks));
+                                    benchmark_ctx.dispatch.emit(
+                                        BenchmarkAction::SetBenchmarksForGitref(
+                                            benchmarks, hardware,
+                                        ),
+                                    );
                                 }
                                 Err(e) => log!(format!("Error fetching benchmarks: {}", e)),
                             }
@@ -105,32 +104,27 @@ fn use_load_benchmarks(
     benchmark_ctx: BenchmarkContext,
     hardware: Option<String>,
     gitref: Option<String>,
-    is_hardware_changing: bool,
 ) {
     use_effect_with(
-        (hardware.clone(), gitref.clone(), is_hardware_changing),
-        move |(hardware, gitref, is_hardware_changing)| {
+        (hardware.clone(), gitref.clone()),
+        move |(hardware, gitref)| {
             let benchmark_ctx = benchmark_ctx.clone();
             let hardware = hardware.clone();
             let gitref = gitref.clone();
 
-            // Only load benchmarks when gitref changes explicitly (not during hardware change)
-            // because of god damn race conditions.
-            if !is_hardware_changing {
-                if let (Some(hardware), Some(gitref)) = (hardware, gitref) {
-                    yew::platform::spawn_local(async move {
-                        match api::fetch_benchmarks_for_hardware_and_gitref(&hardware, &gitref)
-                            .await
-                        {
-                            Ok(benchmarks) => {
-                                benchmark_ctx
-                                    .dispatch
-                                    .emit(BenchmarkAction::SetBenchmarksForGitref(benchmarks));
-                            }
-                            Err(e) => log!(format!("Error fetching benchmarks: {}", e)),
+            if let (Some(hardware), Some(gitref)) = (hardware, gitref) {
+                yew::platform::spawn_local(async move {
+                    match api::fetch_benchmarks_for_hardware_and_gitref(&hardware, &gitref).await {
+                        Ok(benchmarks) => {
+                            benchmark_ctx
+                                .dispatch
+                                .emit(BenchmarkAction::SetBenchmarksForGitref(
+                                    benchmarks, hardware,
+                                ));
                         }
-                    });
-                }
+                        Err(e) => log!(format!("Error fetching benchmarks: {}", e)),
+                    }
+                });
             }
             || ()
         },
@@ -143,7 +137,6 @@ pub fn app_content(props: &AppContentProps) -> Html {
     let gitref_ctx = use_gitref();
     let benchmark_ctx = use_benchmark();
     let view_mode_ctx = use_view_mode();
-    let is_hardware_changing = use_state(|| false);
 
     // Get theme context
     let theme_ctx = use_context::<(bool, Callback<()>)>().expect("Theme context not found");
@@ -161,33 +154,16 @@ pub fn app_content(props: &AppContentProps) -> Html {
     // Initialize data loading hooks
     use_init_hardware(hardware_ctx.clone());
 
-    {
-        let is_hardware_changing = is_hardware_changing.clone();
-        use_effect_with(hardware_ctx.state.selected_hardware.clone(), move |_| {
-            is_hardware_changing.set(true);
-            || ()
-        });
-    }
-
     use_load_gitrefs(
         gitref_ctx.clone(),
         benchmark_ctx.clone(),
         hardware_ctx.state.selected_hardware.clone(),
     );
 
-    {
-        let is_hardware_changing = is_hardware_changing.clone();
-        use_effect_with(gitref_ctx.state.selected_gitref.clone(), move |_| {
-            is_hardware_changing.set(false);
-            || ()
-        });
-    }
-
     use_load_benchmarks(
         benchmark_ctx.clone(),
         hardware_ctx.state.selected_hardware.clone(),
         gitref_ctx.state.selected_gitref.clone(),
-        *is_hardware_changing,
     );
 
     html! {

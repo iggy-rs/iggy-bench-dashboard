@@ -122,7 +122,7 @@ All endpoints return JSON responses (except artifacts which returns a ZIP file) 
 Allows to run and collect performance results for multiple gitrefs back:
 
 ```bash
-cargo run --bin iggy-dashboard-bench-runner -- --directory ~/rust/iggy --count 10 --gitref master --skip-master-check
+cargo run --bin iggy-bench-runner -- --directory ~/rust/iggy --count 10 --gitref master --skip-master-check
 out --output-dir performance_results
 ```
 
@@ -176,7 +176,7 @@ out --output-dir performance_results
 2. Start the server:
 
    ```bash
-   ./target/release/iggy-benchmarks-dashboard-server --host 127.0.0.1 --port 8061
+   ./target/release/iggy-bench-dashboard-server --host 127.0.0.1 --port 8061
    ```
 
 ### Development Mode
@@ -199,7 +199,7 @@ Access the development version at <http://localhost:8060>
 ### Building the Image
 
 ```bash
-docker build -t iggyrs/iggy-benchmarks-dashboard .
+docker build -t iggyrs/iggy-bench-dashboard .
 ```
 
 ### Running the Container
@@ -217,7 +217,7 @@ Basic usage (recommended):
   docker run -p 8061:8061 \
      -v "$(pwd)/performance_results:/data/performance_results" \
      --user "$(id -u):$(id -g)" \
-     iggyrs/iggy-benchmarks-dashboard
+     iggyrs/iggy-bench-dashboard
   ```
 
 With custom configuration:
@@ -229,7 +229,7 @@ With custom configuration:
         -e HOST=0.0.0.0 \
         -e PORT=8061 \
         -e RESULTS_DIR=/data/performance_results \
-        iggyrs/iggy-benchmarks-dashboard
+        iggyrs/iggy-bench-dashboard
   ```
 
 Using a named volume:
@@ -241,7 +241,7 @@ Using a named volume:
   # Run with named volume
   docker run -p 8061:8061 \
      -v iggy-results:/data/performance_results \
-     iggyrs/iggy-benchmarks-dashboard
+     iggyrs/iggy-bench-dashboard
   ```
 
 ## Configuration
@@ -271,7 +271,7 @@ The container is configured to run as a non-root user for security. When mountin
 The server can be configured using command-line arguments:
 
 ```bash
-iggy-benchmarks-dashboard-server [OPTIONS]
+iggy-bench-dashboard-server [OPTIONS]
 
 Options:
       --host <HOST>                  Server host address [default: 127.0.0.1]

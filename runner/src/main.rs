@@ -2,8 +2,8 @@ mod app;
 mod args;
 
 use anyhow::Result;
-use app::IggyDashboardBenchRunnerApp;
-use args::IggyDashboardBenchRunnerArgs;
+use app::IggyBenchRunnerApp;
+use args::IggyBenchRunnerArgs;
 use clap::Parser;
 use tracing::{error, info};
 use tracing_subscriber::{
@@ -16,7 +16,7 @@ use tracing_subscriber::{
 #[tokio::main]
 async fn main() -> Result<()> {
     // Parse arguments first
-    let args = IggyDashboardBenchRunnerArgs::parse();
+    let args = IggyBenchRunnerArgs::parse();
 
     // Initialize tracing
     let env_filter =
@@ -37,6 +37,6 @@ async fn main() -> Result<()> {
     info!("Output directory: {}", args.output_dir);
     info!("Log level: {}", args.log_level);
 
-    let app = IggyDashboardBenchRunnerApp::new(args)?;
+    let app = IggyBenchRunnerApp::new(args)?;
     app.run().await
 }

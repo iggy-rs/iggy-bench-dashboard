@@ -1,5 +1,5 @@
 [package]
-name = "iggy-benchmarks-runner"
+name = "iggy-bench-runner"
 license = "Apache-2.0"
 version.workspace = true
 edition.workspace = true

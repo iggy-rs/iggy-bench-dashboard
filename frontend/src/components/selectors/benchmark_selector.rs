@@ -2,13 +2,13 @@ use crate::{
     components::selectors::benchmark_kind_selector::BenchmarkKindSelector,
     state::benchmark::{use_benchmark, BenchmarkAction},
 };
-use iggy_benchmark_report::benchmark_kind::BenchmarkKind;
+use iggy_bench_report::benchmark_kind::BenchmarkKind;
 use std::collections::HashSet;
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct BenchmarkSelectorProps {
-    pub is_consumer_group: bool,
+    pub kind: BenchmarkKind,
 }
 
 #[function_component(BenchmarkSelector)]
@@ -16,8 +16,38 @@ pub fn benchmark_selector(props: &BenchmarkSelectorProps) -> Html {
     let benchmark_ctx = use_benchmark();
     let selected_kind = benchmark_ctx.state.selected_kind;
 
-    // Get all available benchmark kinds
-    let available_kinds: HashSet<_> = benchmark_ctx.state.entries.keys().cloned().collect();
+    // Get all available benchmark kinds based on the category
+    let available_kinds: HashSet<_> = benchmark_ctx
+        .state
+        .entries
+        .keys()
+        .filter(|k| match props.kind {
+            BenchmarkKind::PinnedProducer
+            | BenchmarkKind::PinnedConsumer
+            | BenchmarkKind::PinnedProducerAndConsumer => {
+                matches!(
+                    k,
+                    BenchmarkKind::PinnedProducer
+                        | BenchmarkKind::PinnedConsumer
+                        | BenchmarkKind::PinnedProducerAndConsumer
+                )
+            }
+            BenchmarkKind::BalancedProducer
+            | BenchmarkKind::BalancedConsumerGroup
+            | BenchmarkKind::BalancedProducerAndConsumerGroup => {
+                matches!(
+                    k,
+                    BenchmarkKind::BalancedProducer
+                        | BenchmarkKind::BalancedConsumerGroup
+                        | BenchmarkKind::BalancedProducerAndConsumerGroup
+                )
+            }
+            BenchmarkKind::EndToEndProducingConsumer => {
+                matches!(k, BenchmarkKind::EndToEndProducingConsumer)
+            }
+        })
+        .cloned()
+        .collect();
 
     // Create a longer-lived reference to the current benchmarks
     let empty_vec = Vec::new();
@@ -62,7 +92,6 @@ pub fn benchmark_selector(props: &BenchmarkSelectorProps) -> Html {
             <BenchmarkKindSelector
                 selected_kind={selected_kind}
                 on_kind_select={on_kind_select}
-                is_consumer_group={props.is_consumer_group}
                 available_kinds={available_kinds}
             />
 

@@ -1,4 +1,4 @@
-use iggy_benchmark_report::benchmark_kind::BenchmarkKind;
+use iggy_bench_report::benchmark_kind::BenchmarkKind;
 use std::collections::HashSet;
 use yew::prelude::*;
 
@@ -6,7 +6,6 @@ use yew::prelude::*;
 pub struct BenchmarkKindSelectorProps {
     pub selected_kind: BenchmarkKind,
     pub on_kind_select: Callback<BenchmarkKind>,
-    pub is_consumer_group: bool,
     pub available_kinds: HashSet<BenchmarkKind>,
 }
 
@@ -14,96 +13,120 @@ pub struct BenchmarkKindSelectorProps {
 pub fn benchmark_kind_selector(props: &BenchmarkKindSelectorProps) -> Html {
     html! {
         <div class="benchmark-grid">
-            if !props.is_consumer_group {
+            if matches!(props.selected_kind,
+                BenchmarkKind::PinnedProducer |
+                BenchmarkKind::PinnedConsumer |
+                BenchmarkKind::PinnedProducerAndConsumer)
+            {
                 <>
                     <button
                         class={classes!(
                             "benchmark-option",
-                            matches!(props.selected_kind, BenchmarkKind::Send).then_some("active"),
-                            (!props.available_kinds.contains(&BenchmarkKind::Send)).then_some("inactive")
+                            matches!(props.selected_kind, BenchmarkKind::PinnedProducer).then_some("active"),
+                            (!props.available_kinds.contains(&BenchmarkKind::PinnedProducer)).then_some("inactive")
                         )}
                         onclick={
                             let on_kind_select = props.on_kind_select.clone();
-                            move |_| on_kind_select.emit(BenchmarkKind::Send)
+                            move |_| on_kind_select.emit(BenchmarkKind::PinnedProducer)
                         }
                     >
                         <span class="benchmark-option-icon">{"↑"}</span>
-                        <span class="benchmark-option-label">{"Send"}</span>
+                        <span class="benchmark-option-label">{"Producer"}</span>
                     </button>
                     <button
                         class={classes!(
                             "benchmark-option",
-                            matches!(props.selected_kind, BenchmarkKind::Poll).then_some("active"),
-                            (!props.available_kinds.contains(&BenchmarkKind::Poll)).then_some("inactive")
+                            matches!(props.selected_kind, BenchmarkKind::PinnedConsumer).then_some("active"),
+                            (!props.available_kinds.contains(&BenchmarkKind::PinnedConsumer)).then_some("inactive")
                         )}
                         onclick={
                             let on_kind_select = props.on_kind_select.clone();
-                            move |_| on_kind_select.emit(BenchmarkKind::Poll)
+                            move |_| on_kind_select.emit(BenchmarkKind::PinnedConsumer)
                         }
                     >
                         <span class="benchmark-option-icon">{"↓"}</span>
-                        <span class="benchmark-option-label">{"Poll"}</span>
+                        <span class="benchmark-option-label">{"Consumer"}</span>
                     </button>
                     <button
                         class={classes!(
                             "benchmark-option",
-                            matches!(props.selected_kind, BenchmarkKind::SendAndPoll).then_some("active"),
-                            (!props.available_kinds.contains(&BenchmarkKind::SendAndPoll)).then_some("inactive")
+                            matches!(props.selected_kind, BenchmarkKind::PinnedProducerAndConsumer).then_some("active"),
+                            (!props.available_kinds.contains(&BenchmarkKind::PinnedProducerAndConsumer)).then_some("inactive")
                         )}
                         onclick={
                             let on_kind_select = props.on_kind_select.clone();
-                            move |_| on_kind_select.emit(BenchmarkKind::SendAndPoll)
+                            move |_| on_kind_select.emit(BenchmarkKind::PinnedProducerAndConsumer)
                         }
                     >
-                        <span class="benchmark-option-icon">{"⇅"}</span>
-                        <span class="benchmark-option-label">{"Send & Poll"}</span>
+                        <span class="benchmark-option-icon">{"↕"}</span>
+                        <span class="benchmark-option-label">{"Producer & Consumer"}</span>
+                    </button>
+                </>
+            } else if matches!(props.selected_kind,
+                BenchmarkKind::BalancedProducer |
+                BenchmarkKind::BalancedConsumerGroup |
+                BenchmarkKind::BalancedProducerAndConsumerGroup)
+            {
+                <>
+                    <button
+                        class={classes!(
+                            "benchmark-option",
+                            matches!(props.selected_kind, BenchmarkKind::BalancedProducer).then_some("active"),
+                            (!props.available_kinds.contains(&BenchmarkKind::BalancedProducer)).then_some("inactive")
+                        )}
+                        onclick={
+                            let on_kind_select = props.on_kind_select.clone();
+                            move |_| on_kind_select.emit(BenchmarkKind::BalancedProducer)
+                        }
+                    >
+                        <span class="benchmark-option-icon">{"↑"}</span>
+                        <span class="benchmark-option-label">{"Producer"}</span>
+                    </button>
+                    <button
+                        class={classes!(
+                            "benchmark-option",
+                            matches!(props.selected_kind, BenchmarkKind::BalancedConsumerGroup).then_some("active"),
+                            (!props.available_kinds.contains(&BenchmarkKind::BalancedConsumerGroup)).then_some("inactive")
+                        )}
+                        onclick={
+                            let on_kind_select = props.on_kind_select.clone();
+                            move |_| on_kind_select.emit(BenchmarkKind::BalancedConsumerGroup)
+                        }
+                    >
+                        <span class="benchmark-option-icon">{"↓"}</span>
+                        <span class="benchmark-option-label">{"Consumer Group"}</span>
+                    </button>
+                    <button
+                        class={classes!(
+                            "benchmark-option",
+                            matches!(props.selected_kind, BenchmarkKind::BalancedProducerAndConsumerGroup).then_some("active"),
+                            (!props.available_kinds.contains(&BenchmarkKind::BalancedProducerAndConsumerGroup)).then_some("inactive")
+                        )}
+                        onclick={
+                            let on_kind_select = props.on_kind_select.clone();
+                            move |_| on_kind_select.emit(BenchmarkKind::BalancedProducerAndConsumerGroup)
+                        }
+                    >
+                        <span class="benchmark-option-icon">{"↕"}</span>
+                        <span class="benchmark-option-label">{"Producer & Consumer Group"}</span>
                     </button>
                 </>
             } else {
-                <>
-                    <button
-                        class={classes!(
-                            "benchmark-option",
-                            matches!(props.selected_kind, BenchmarkKind::ConsumerGroupSend).then_some("active"),
-                            (!props.available_kinds.contains(&BenchmarkKind::ConsumerGroupSend)).then_some("inactive")
-                        )}
-                        onclick={
-                            let on_kind_select = props.on_kind_select.clone();
-                            move |_| on_kind_select.emit(BenchmarkKind::ConsumerGroupSend)
-                        }
-                    >
-                        <span class="benchmark-option-icon">{"↑"}</span>
-                        <span class="benchmark-option-label">{"Send"}</span>
-                    </button>
-                    <button
-                        class={classes!(
-                            "benchmark-option",
-                            matches!(props.selected_kind, BenchmarkKind::ConsumerGroupPoll).then_some("active"),
-                            (!props.available_kinds.contains(&BenchmarkKind::ConsumerGroupPoll)).then_some("inactive")
-                        )}
-                        onclick={
-                            let on_kind_select = props.on_kind_select.clone();
-                            move |_| on_kind_select.emit(BenchmarkKind::ConsumerGroupPoll)
-                        }
-                    >
-                        <span class="benchmark-option-icon">{"↓"}</span>
-                        <span class="benchmark-option-label">{"Poll"}</span>
-                    </button>
-                    <button
-                        class={classes!(
-                            "benchmark-option",
-                            matches!(props.selected_kind, BenchmarkKind::ConsumerGroupSendAndPoll).then_some("active"),
-                            (!props.available_kinds.contains(&BenchmarkKind::ConsumerGroupSendAndPoll)).then_some("inactive")
-                        )}
-                        onclick={
-                            let on_kind_select = props.on_kind_select.clone();
-                            move |_| on_kind_select.emit(BenchmarkKind::ConsumerGroupSendAndPoll)
-                        }
-                    >
-                        <span class="benchmark-option-icon">{"⇅"}</span>
-                        <span class="benchmark-option-label">{"Send & Poll"}</span>
-                    </button>
-                </>
+                // End to End
+                <button
+                    class={classes!(
+                        "benchmark-option",
+                        matches!(props.selected_kind, BenchmarkKind::EndToEndProducingConsumer).then_some("active"),
+                        (!props.available_kinds.contains(&BenchmarkKind::EndToEndProducingConsumer)).then_some("inactive")
+                    )}
+                    onclick={
+                        let on_kind_select = props.on_kind_select.clone();
+                        move |_| on_kind_select.emit(BenchmarkKind::EndToEndProducingConsumer)
+                    }
+                >
+                    <span class="benchmark-option-icon">{"↔"}</span>
+                    <span class="benchmark-option-label">{"Producing Consumer"}</span>
+                </button>
             }
         </div>
     }

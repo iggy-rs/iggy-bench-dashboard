@@ -1,6 +1,6 @@
 use super::{BenchmarkCache, Result};
-use crate::error::IggyDashboardServerError;
-use shared::BenchmarkReportLight;
+use crate::error::IggyBenchDashboardServerError;
+use iggy_bench_dashboard_shared::BenchmarkReportLight;
 use std::path::Path;
 use tracing::{error, info};
 
@@ -12,7 +12,7 @@ impl BenchmarkCache {
         );
 
         let entries: Vec<_> = std::fs::read_dir(&self.results_dir)
-            .map_err(IggyDashboardServerError::Io)?
+            .map_err(IggyBenchDashboardServerError::Io)?
             .filter_map(|r| r.ok())
             .filter(|entry| entry.file_type().map(|t| t.is_dir()).unwrap_or(false))
             .collect();
@@ -75,7 +75,7 @@ impl BenchmarkCache {
     pub fn load_light_report(&self, path: &Path) -> Result<BenchmarkReportLight> {
         let data = std::fs::read_to_string(path).map_err(|e| {
             error!("Failed to read benchmark file {:?}: {}", path, e);
-            IggyDashboardServerError::Io(e)
+            IggyBenchDashboardServerError::Io(e)
         })?;
 
         serde_json::from_str(&data).map_err(|e| {
@@ -89,7 +89,7 @@ impl BenchmarkCache {
                     data
                 }
             );
-            IggyDashboardServerError::InvalidJson(e.to_string())
+            IggyBenchDashboardServerError::InvalidJson(e.to_string())
         })
     }
 }
