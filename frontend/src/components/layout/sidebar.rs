@@ -56,6 +56,7 @@ pub fn sidebar(props: &SidebarProps) -> Html {
             matches!(
                 b.params.benchmark_kind,
                 BenchmarkKind::EndToEndProducingConsumer
+                    | BenchmarkKind::EndToEndProducingConsumerGroup
             )
         })
     });

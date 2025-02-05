@@ -127,6 +127,20 @@ pub fn benchmark_kind_selector(props: &BenchmarkKindSelectorProps) -> Html {
                     <span class="benchmark-option-icon">{"↔"}</span>
                     <span class="benchmark-option-label">{"Producing Consumer"}</span>
                 </button>
+                <button
+                    class={classes!(
+                        "benchmark-option",
+                        matches!(props.selected_kind, BenchmarkKind::EndToEndProducingConsumerGroup).then_some("active"),
+                        (!props.available_kinds.contains(&BenchmarkKind::EndToEndProducingConsumerGroup)).then_some("inactive")
+                    )}
+                    onclick={
+                        let on_kind_select = props.on_kind_select.clone();
+                        move |_| on_kind_select.emit(BenchmarkKind::EndToEndProducingConsumerGroup)
+                    }
+                >
+                    <span class="benchmark-option-icon">{"↔"}</span>
+                    <span class="benchmark-option-label">{"Producing Consumer Group"}</span>
+                </button>
             }
         </div>
     }

@@ -45,6 +45,9 @@ pub fn benchmark_selector(props: &BenchmarkSelectorProps) -> Html {
             BenchmarkKind::EndToEndProducingConsumer => {
                 matches!(k, BenchmarkKind::EndToEndProducingConsumer)
             }
+            BenchmarkKind::EndToEndProducingConsumerGroup => {
+                matches!(k, BenchmarkKind::EndToEndProducingConsumerGroup)
+            }
         })
         .cloned()
         .collect();
