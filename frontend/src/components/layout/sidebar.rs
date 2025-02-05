@@ -61,6 +61,62 @@ pub fn sidebar(props: &SidebarProps) -> Html {
         })
     });
 
+    let pinned_benchmark_count = benchmark_ctx
+        .state
+        .entries
+        .values()
+        .map(|benchmarks| {
+            benchmarks
+                .iter()
+                .filter(|b| {
+                    matches!(
+                        b.params.benchmark_kind,
+                        BenchmarkKind::PinnedProducer
+                            | BenchmarkKind::PinnedConsumer
+                            | BenchmarkKind::PinnedProducerAndConsumer
+                    )
+                })
+                .count()
+        })
+        .sum::<usize>();
+
+    let balanced_benchmark_count = benchmark_ctx
+        .state
+        .entries
+        .values()
+        .map(|benchmarks| {
+            benchmarks
+                .iter()
+                .filter(|b| {
+                    matches!(
+                        b.params.benchmark_kind,
+                        BenchmarkKind::BalancedProducer
+                            | BenchmarkKind::BalancedConsumerGroup
+                            | BenchmarkKind::BalancedProducerAndConsumerGroup
+                    )
+                })
+                .count()
+        })
+        .sum::<usize>();
+
+    let end_to_end_benchmark_count = benchmark_ctx
+        .state
+        .entries
+        .values()
+        .map(|benchmarks| {
+            benchmarks
+                .iter()
+                .filter(|b| {
+                    matches!(
+                        b.params.benchmark_kind,
+                        BenchmarkKind::EndToEndProducingConsumer
+                            | BenchmarkKind::EndToEndProducingConsumerGroup
+                    )
+                })
+                .count()
+        })
+        .sum::<usize>();
+
     fn get_default_kind_for_tab(tab: &BenchmarkTab) -> BenchmarkKind {
         match tab {
             BenchmarkTab::Pinned => BenchmarkKind::PinnedProducer,
@@ -167,7 +223,7 @@ pub fn sidebar(props: &SidebarProps) -> Html {
                         onclick={let on_tab_click = on_tab_click.clone();
                                 move |_| on_tab_click.emit(BenchmarkTab::Pinned)}
                     >
-                        { "Pinned" }
+                        { "Pinned ("}{pinned_benchmark_count}{")"}
                     </button>
                     <button
                         class={classes!(
@@ -179,7 +235,7 @@ pub fn sidebar(props: &SidebarProps) -> Html {
                         onclick={let on_tab_click = on_tab_click.clone();
                                 move |_| on_tab_click.emit(BenchmarkTab::Balanced)}
                     >
-                        { "Balanced" }
+                        { "Balanced ("}{balanced_benchmark_count}{")"}
                     </button>
                     <button
                         class={classes!(
@@ -191,7 +247,7 @@ pub fn sidebar(props: &SidebarProps) -> Html {
                         onclick={let on_tab_click = on_tab_click.clone();
                                 move |_| on_tab_click.emit(BenchmarkTab::EndToEnd)}
                     >
-                        { "End to End" }
+                        { "End to End ("}{end_to_end_benchmark_count}{")"}
                     </button>
                 </div>
                 <div class={classes!(
