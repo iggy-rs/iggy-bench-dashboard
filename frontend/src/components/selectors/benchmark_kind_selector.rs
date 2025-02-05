@@ -1,3 +1,4 @@
+use crate::state::benchmark::use_benchmark;
 use iggy_bench_report::benchmark_kind::BenchmarkKind;
 use std::collections::HashSet;
 use yew::prelude::*;
@@ -11,6 +12,23 @@ pub struct BenchmarkKindSelectorProps {
 
 #[function_component(BenchmarkKindSelector)]
 pub fn benchmark_kind_selector(props: &BenchmarkKindSelectorProps) -> Html {
+    let benchmark_ctx = use_benchmark();
+
+    // Function to count benchmarks for a specific kind
+    let count_benchmarks = |kind: BenchmarkKind| -> usize {
+        benchmark_ctx
+            .state
+            .entries
+            .values()
+            .map(|benchmarks| {
+                benchmarks
+                    .iter()
+                    .filter(|b| b.params.benchmark_kind == kind)
+                    .count()
+            })
+            .sum()
+    };
+
     html! {
         <div class="benchmark-grid">
             if matches!(props.selected_kind,
@@ -31,7 +49,7 @@ pub fn benchmark_kind_selector(props: &BenchmarkKindSelectorProps) -> Html {
                         }
                     >
                         <span class="benchmark-option-icon">{"↑"}</span>
-                        <span class="benchmark-option-label">{"Producer"}</span>
+                        <span class="benchmark-option-label">{"Producer ("}{count_benchmarks(BenchmarkKind::PinnedProducer)}{")"}</span>
                     </button>
                     <button
                         class={classes!(
@@ -45,7 +63,7 @@ pub fn benchmark_kind_selector(props: &BenchmarkKindSelectorProps) -> Html {
                         }
                     >
                         <span class="benchmark-option-icon">{"↓"}</span>
-                        <span class="benchmark-option-label">{"Consumer"}</span>
+                        <span class="benchmark-option-label">{"Consumer ("}{count_benchmarks(BenchmarkKind::PinnedConsumer)}{")"}</span>
                     </button>
                     <button
                         class={classes!(
@@ -59,7 +77,7 @@ pub fn benchmark_kind_selector(props: &BenchmarkKindSelectorProps) -> Html {
                         }
                     >
                         <span class="benchmark-option-icon">{"↕"}</span>
-                        <span class="benchmark-option-label">{"Producer & Consumer"}</span>
+                        <span class="benchmark-option-label">{"Producer & Consumer ("}{count_benchmarks(BenchmarkKind::PinnedProducerAndConsumer)}{")"}</span>
                     </button>
                 </>
             } else if matches!(props.selected_kind,
@@ -80,7 +98,7 @@ pub fn benchmark_kind_selector(props: &BenchmarkKindSelectorProps) -> Html {
                         }
                     >
                         <span class="benchmark-option-icon">{"↑"}</span>
-                        <span class="benchmark-option-label">{"Producer"}</span>
+                        <span class="benchmark-option-label">{"Producer ("}{count_benchmarks(BenchmarkKind::BalancedProducer)}{")"}</span>
                     </button>
                     <button
                         class={classes!(
@@ -94,7 +112,7 @@ pub fn benchmark_kind_selector(props: &BenchmarkKindSelectorProps) -> Html {
                         }
                     >
                         <span class="benchmark-option-icon">{"↓"}</span>
-                        <span class="benchmark-option-label">{"Consumer Group"}</span>
+                        <span class="benchmark-option-label">{"Consumer Group ("}{count_benchmarks(BenchmarkKind::BalancedConsumerGroup)}{")"}</span>
                     </button>
                     <button
                         class={classes!(
@@ -108,39 +126,40 @@ pub fn benchmark_kind_selector(props: &BenchmarkKindSelectorProps) -> Html {
                         }
                     >
                         <span class="benchmark-option-icon">{"↕"}</span>
-                        <span class="benchmark-option-label">{"Producer & Consumer Group"}</span>
+                        <span class="benchmark-option-label">{"Producer & Consumer Group ("}{count_benchmarks(BenchmarkKind::BalancedProducerAndConsumerGroup)}{")"}</span>
                     </button>
                 </>
             } else {
-                // End to End
-                <button
-                    class={classes!(
-                        "benchmark-option",
-                        matches!(props.selected_kind, BenchmarkKind::EndToEndProducingConsumer).then_some("active"),
-                        (!props.available_kinds.contains(&BenchmarkKind::EndToEndProducingConsumer)).then_some("inactive")
-                    )}
-                    onclick={
-                        let on_kind_select = props.on_kind_select.clone();
-                        move |_| on_kind_select.emit(BenchmarkKind::EndToEndProducingConsumer)
-                    }
-                >
-                    <span class="benchmark-option-icon">{"↔"}</span>
-                    <span class="benchmark-option-label">{"Producing Consumer"}</span>
-                </button>
-                <button
-                    class={classes!(
-                        "benchmark-option",
-                        matches!(props.selected_kind, BenchmarkKind::EndToEndProducingConsumerGroup).then_some("active"),
-                        (!props.available_kinds.contains(&BenchmarkKind::EndToEndProducingConsumerGroup)).then_some("inactive")
-                    )}
-                    onclick={
-                        let on_kind_select = props.on_kind_select.clone();
-                        move |_| on_kind_select.emit(BenchmarkKind::EndToEndProducingConsumerGroup)
-                    }
-                >
-                    <span class="benchmark-option-icon">{"↔"}</span>
-                    <span class="benchmark-option-label">{"Producing Consumer Group"}</span>
-                </button>
+                <>
+                    <button
+                        class={classes!(
+                            "benchmark-option",
+                            matches!(props.selected_kind, BenchmarkKind::EndToEndProducingConsumer).then_some("active"),
+                            (!props.available_kinds.contains(&BenchmarkKind::EndToEndProducingConsumer)).then_some("inactive")
+                        )}
+                        onclick={
+                            let on_kind_select = props.on_kind_select.clone();
+                            move |_| on_kind_select.emit(BenchmarkKind::EndToEndProducingConsumer)
+                        }
+                    >
+                        <span class="benchmark-option-icon">{"↔"}</span>
+                        <span class="benchmark-option-label">{"Producing Consumer ("}{count_benchmarks(BenchmarkKind::EndToEndProducingConsumer)}{")"}</span>
+                    </button>
+                    <button
+                        class={classes!(
+                            "benchmark-option",
+                            matches!(props.selected_kind, BenchmarkKind::EndToEndProducingConsumerGroup).then_some("active"),
+                            (!props.available_kinds.contains(&BenchmarkKind::EndToEndProducingConsumerGroup)).then_some("inactive")
+                        )}
+                        onclick={
+                            let on_kind_select = props.on_kind_select.clone();
+                            move |_| on_kind_select.emit(BenchmarkKind::EndToEndProducingConsumerGroup)
+                        }
+                    >
+                        <span class="benchmark-option-icon">{"↔"}</span>
+                        <span class="benchmark-option-label">{"Producing Consumer Group ("}{count_benchmarks(BenchmarkKind::EndToEndProducingConsumerGroup)}{")"}</span>
+                    </button>
+                </>
             }
         </div>
     }
