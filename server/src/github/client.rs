@@ -29,10 +29,7 @@ impl IggyBenchDashboardGithubClient {
         Ok(Self { octocrab })
     }
 
-    /// Download the `performance_results.zip` for a given workflow ID in
-    /// `performance.yml` workflows and return the output directory.
     pub async fn download_artifact(&self, workflow_id: u64) -> Result<TempDir> {
-        // Fetch the list of workflow runs for "performance.yml" with a successful status
         let runs = self.get_all_workflow_runs().await?;
         if runs.is_empty() {
             anyhow::bail!("No successful workflow runs found")
@@ -40,21 +37,17 @@ impl IggyBenchDashboardGithubClient {
 
         let run_id = RunId(workflow_id);
 
-        // Find the specific run with the provided workflow_id
         runs.iter().find(|run| run.id == run_id).context(format!(
             "Workflow run {workflow_id} not found in {WORKFLOW_FILE}"
         ))?;
 
-        // Fetch the list of artifacts for the specific run
         let artifacts = self.get_artifacts_for_workflow_run(run_id).await?;
 
-        // Assuming you want the first artifact; adjust if necessary
         let artifact = &artifacts[0];
         let artifact_id = artifact.id;
 
         info!("Downloading artifact ID: {}", artifact_id);
 
-        // Download the artifact as bytes in ZIP format
         let bytes = self
             .octocrab
             .actions()
@@ -66,13 +59,11 @@ impl IggyBenchDashboardGithubClient {
             bytes.len()
         );
 
-        // Create a temporary directory
         let temp_dir = TempDir::new()?;
         let output_dir = temp_dir.path();
 
         info!("Unzipping to directory: {:?}", output_dir);
 
-        // Unzip the downloaded bytes into the temporary directory
         let cursor = Cursor::new(bytes);
         let mut zip = ZipArchive::new(cursor)?;
 
@@ -81,19 +72,15 @@ impl IggyBenchDashboardGithubClient {
             let outpath = output_dir.join(file.mangled_name());
 
             if file.is_dir() {
-                // It's a directory; create it
                 std::fs::create_dir_all(&outpath)?;
             } else {
-                // It's a file; ensure the parent directory exists
                 if let Some(parent) = outpath.parent() {
                     std::fs::create_dir_all(parent)?;
                 }
-                // Create and write the file
                 let mut outfile = std::fs::File::create(&outpath)?;
                 std::io::copy(&mut file, &mut outfile)?;
             }
 
-            // Optionally, set Unix permissions if applicable
             #[cfg(unix)]
             {
                 use std::os::unix::fs::PermissionsExt;
@@ -106,7 +93,6 @@ impl IggyBenchDashboardGithubClient {
 
         info!("Artifact unzipped to: {:?}", output_dir);
 
-        // After unzipping, asynchronously read and filter directory entries
         let mut entries = Vec::new();
         let mut dir = read_dir(output_dir).await?;
         while let Some(entry) = dir.next_entry().await? {
@@ -116,7 +102,6 @@ impl IggyBenchDashboardGithubClient {
             }
         }
 
-        // Check if there's exactly one directory
         if entries.len() != 1 {
             anyhow::bail!(
                 "Expected exactly one directory in the unzipped artifact directory {}, found {}",

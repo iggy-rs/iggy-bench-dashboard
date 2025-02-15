@@ -21,4 +21,6 @@ web-sys = { version = "0.3", features = [
 ] }
 yew = { version = "0.21", features = ["csr"] }
 yew-hooks = "0.3.3"
-uuid = { version = "1.12.1", features = ["serde"] }
+uuid = { version = "1.13.1", features = ["serde"] }
+yew-router = "0.18"
+urlencoding = "2.1.3"

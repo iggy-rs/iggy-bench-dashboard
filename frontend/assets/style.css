@@ -25,7 +25,7 @@
 
     /* Additional Dark Theme Variables */
     --color-dark-tooltip-background: #2a2a2a;
-    --color-dark-select-arrow: #ffffff; /* Color for select arrow in dark mode */
+    --color-dark-select-arrow: #ffffff;
 
     /* Spacing */
     --spacing-xs: 4px;
@@ -106,6 +106,29 @@ body {
     flex-direction: column;
     min-height: 0;
     overflow: hidden;
+    position: relative;
+}
+
+.chart-title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.chart-title-primary {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.chart-title-sub {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-top: var(--spacing-xs);
+    white-space: pre-line;
+    line-height: 1.4;
 }
 
 .single-view,
@@ -233,11 +256,11 @@ body.dark select option {
 }
 
 .top-buttons {
-    position: absolute;
-    top: var(--spacing-md);
-    left: var(--spacing-md);
     display: flex;
-    gap: var(--spacing-xs);
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background-color: var(--color-background);
     z-index: 10;
 }
 
@@ -783,6 +806,16 @@ body.dark .footer .gitref {
     font-weight: 500;
 }
 
+.tab-button.inactive {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.tab-button.inactive:hover {
+    background-color: inherit;
+    color: var(--color-text-secondary);
+}
+
 .tab-content {
     display: none;
 }
@@ -975,7 +1008,6 @@ body.dark .footer .gitref {
 .measurement-buttons {
     display: flex;
     gap: var(--spacing-xs);
-    margin-left: var(--spacing-xs);
 }
 
 .measurement-button {
@@ -1036,7 +1068,7 @@ body.dark .footer .gitref {
     cursor: pointer;
     transition: all 0.2s ease;
     padding: 0;
-    margin: 0 var(--spacing-xs);
+    margin: 0;
 }
 
 .server-stats-button:hover:not(:disabled) {

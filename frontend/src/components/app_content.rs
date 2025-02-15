@@ -1,4 +1,3 @@
-use super::selectors::measurement_type_selector::MeasurementType;
 use crate::{
     api,
     components::layout::{main_content::MainContent, sidebar::Sidebar},
@@ -6,35 +5,40 @@ use crate::{
         benchmark::{use_benchmark, BenchmarkAction, BenchmarkContext},
         gitref::{use_gitref, GitrefAction, GitrefContext},
         hardware::{use_hardware, HardwareAction, HardwareContext},
-        view_mode::use_view_mode,
+        ui::{use_ui, UiAction},
     },
 };
 use gloo::console::log;
+use urlencoding::decode;
 use yew::prelude::*;
+use yew_router::hooks::use_location;
 
 // Props definitions
 #[derive(Properties, PartialEq)]
-pub struct AppContentProps {
-    pub selected_measurement: MeasurementType,
-    pub is_benchmark_tooltip_visible: bool,
-    pub on_measurement_select: Callback<MeasurementType>,
-    pub on_benchmark_tooltip_toggle: Callback<()>,
-}
+pub struct AppContentProps {}
 
 // Hardware initialization hook
 #[hook]
 fn use_init_hardware(hardware_ctx: HardwareContext) {
+    use gloo::console::log;
+
     use_effect_with((), move |_| {
         let dispatch = hardware_ctx.dispatch.clone();
+        let already_selected = hardware_ctx.state.selected_hardware.clone();
         yew::platform::spawn_local(async move {
             match api::fetch_hardware_configurations().await {
-                Ok(hardware) => {
-                    if !hardware.is_empty() {
-                        dispatch.emit(HardwareAction::SetHardwareList(hardware.clone()));
-                        let default_hardware = &hardware[0];
-                        dispatch.emit(HardwareAction::SelectHardware(
-                            default_hardware.identifier.clone(),
-                        ));
+                Ok(mut hw_list) => {
+                    if !hw_list.is_empty() {
+                        hw_list.sort_by(|a, b| a.identifier.cmp(&b.identifier));
+                        dispatch.emit(HardwareAction::SetHardwareList(hw_list.clone()));
+
+                        if already_selected.is_none() {
+                            if let Some(first_hw) = hw_list.first() {
+                                dispatch.emit(HardwareAction::SelectHardware(Some(
+                                    first_hw.identifier.clone().unwrap(),
+                                )));
+                            }
+                        }
                     }
                 }
                 Err(e) => log!(format!("Error fetching hardware: {}", e)),
@@ -43,7 +47,6 @@ fn use_init_hardware(hardware_ctx: HardwareContext) {
         || ()
     });
 }
-
 // Gitref loading hook
 #[hook]
 fn use_load_gitrefs(
@@ -51,6 +54,8 @@ fn use_load_gitrefs(
     benchmark_ctx: BenchmarkContext,
     hardware: Option<String>,
 ) {
+    use gloo::console::log;
+
     use_effect_with(hardware.clone(), move |hardware| {
         let gitref_ctx = gitref_ctx.clone();
         let benchmark_ctx = benchmark_ctx.clone();
@@ -63,20 +68,28 @@ fn use_load_gitrefs(
                         gitref_ctx
                             .dispatch
                             .emit(GitrefAction::SetGitrefs(vers.clone()));
-
                         if !vers.is_empty() {
-                            let selected_gitref = vers[0].clone();
-                            log!("Using first available version for new hardware");
+                            let current_selected = gitref_ctx.state.selected_gitref.clone();
 
-                            gitref_ctx
-                                .dispatch
-                                .emit(GitrefAction::SetSelectedGitref(Some(
-                                    selected_gitref.clone(),
-                                )));
+                            let final_gitref = match current_selected {
+                                Some(ref existing) if vers.contains(existing) => existing.clone(),
+                                _ => {
+                                    log!("Using first available version for new hardware");
+                                    vers[0].clone()
+                                }
+                            };
+
+                            if Some(final_gitref.clone()) != gitref_ctx.state.selected_gitref {
+                                gitref_ctx
+                                    .dispatch
+                                    .emit(GitrefAction::SetSelectedGitref(Some(
+                                        final_gitref.clone(),
+                                    )));
+                            }
 
                             match api::fetch_benchmarks_for_hardware_and_gitref(
                                 &hardware,
-                                &selected_gitref,
+                                &final_gitref,
                             )
                             .await
                             {
@@ -132,27 +145,79 @@ fn use_load_benchmarks(
 }
 
 #[function_component(AppContent)]
-pub fn app_content(props: &AppContentProps) -> Html {
+pub fn app_content() -> Html {
     let hardware_ctx = use_hardware();
     let gitref_ctx = use_gitref();
     let benchmark_ctx = use_benchmark();
-    let view_mode_ctx = use_view_mode();
-
-    // Get theme context
+    let ui_state = use_ui();
     let theme_ctx = use_context::<(bool, Callback<()>)>().expect("Theme context not found");
     let is_dark = theme_ctx.0;
     let theme_toggle = theme_ctx.1;
+    let location = use_location().expect("Should have <BrowserRouter> in the tree");
 
-    // Create a new callback that adapts () -> bool
-    let on_theme_toggle = {
-        let theme_toggle = theme_toggle.clone();
-        Callback::from(move |_: bool| {
-            theme_toggle.emit(());
-        })
-    };
-
-    // Initialize data loading hooks
     use_init_hardware(hardware_ctx.clone());
+
+    {
+        let hardware_ctx = hardware_ctx.clone();
+        let gitref_ctx = gitref_ctx.clone();
+        let benchmark_ctx = benchmark_ctx.clone();
+        let ui_state = ui_state.clone();
+        let query_str = location.query_str().to_string();
+
+        use_effect_with((), move |_| {
+            let search = query_str.clone();
+            let (hw_opt, gitref_opt, meas_opt, pid_opt) = parse_query_params_from_str(&search);
+            if hw_opt.is_none() && gitref_opt.is_none() && meas_opt.is_none() && pid_opt.is_none() {
+                log!("No query params, selecting first available");
+            } else {
+                if let Some(hw) = hw_opt {
+                    log!("Selected hardware: {}", &hw);
+                    let already = hardware_ctx.state.selected_hardware.as_ref();
+                    if already != Some(&hw) {
+                        hardware_ctx
+                            .dispatch
+                            .emit(HardwareAction::SelectHardware(Some(hw)));
+                    }
+                }
+
+                if let Some(gr) = gitref_opt {
+                    log!("Selected gitref: {}", &gr);
+                    let already = &gitref_ctx.state.selected_gitref;
+                    if already.as_ref() != Some(&gr) {
+                        gitref_ctx
+                            .dispatch
+                            .emit(GitrefAction::SetSelectedGitref(Some(gr)));
+                    }
+                }
+
+                if let Some(meas_str) = meas_opt {
+                    log!("Selected measurement: {}", &meas_str);
+                    if let Ok(meas) = meas_str.parse() {
+                        if meas != ui_state.selected_measurement {
+                            ui_state.dispatch(UiAction::SetMeasurementType(meas));
+                        }
+                    }
+                }
+
+                if let Some(pid) = pid_opt {
+                    log!("Selected params identifier: {}", &pid);
+                    let already_same_pid = benchmark_ctx
+                        .state
+                        .selected_benchmark
+                        .as_ref()
+                        .map(|b| b.params.params_identifier == pid)
+                        .unwrap_or(false);
+                    if !already_same_pid {
+                        benchmark_ctx
+                            .dispatch
+                            .emit(BenchmarkAction::SelectBenchmarkByParamsIdentifier(pid));
+                    }
+                }
+            }
+
+            || ()
+        });
+    }
 
     use_load_gitrefs(
         gitref_ctx.clone(),
@@ -174,15 +239,47 @@ pub fn app_content(props: &AppContentProps) -> Html {
                 })}
             />
             <MainContent
-                selected_measurement={props.selected_measurement.clone()}
                 selected_gitref={gitref_ctx.state.selected_gitref.clone().unwrap_or_default()}
                 is_dark={is_dark}
-                is_benchmark_tooltip_visible={props.is_benchmark_tooltip_visible}
-                on_theme_toggle={on_theme_toggle}
-                on_benchmark_tooltip_toggle={props.on_benchmark_tooltip_toggle.clone()}
-                on_measurement_select={props.on_measurement_select.clone()}
-                view_mode={view_mode_ctx.mode.clone()}
+                on_theme_toggle={Callback::from(move |_: bool| {
+                    theme_toggle.emit(());
+                })}
+                view_mode={ui_state.view_mode.clone()}
             />
         </div>
     }
+}
+
+fn parse_query_params_from_str(
+    search: &str,
+) -> (
+    Option<String>, // hardware
+    Option<String>, // gitref
+    Option<String>, // measurement
+    Option<String>, // params_identifier
+) {
+    let search = search.trim_start_matches('?');
+    let mut hardware = None;
+    let mut gitref = None;
+    let mut measurement = None;
+    let mut params_identifier = None;
+
+    for pair in search.split('&') {
+        let mut parts = pair.split('=');
+        if let Some(key) = parts.next() {
+            if let Some(value) = parts.next() {
+                let decoded = decode(value).unwrap_or_else(|_| value.into()).into_owned();
+
+                match key {
+                    "hardware" => hardware = Some(decoded),
+                    "gitref" => gitref = Some(decoded),
+                    "measurement" => measurement = Some(decoded),
+                    "params_identifier" => params_identifier = Some(decoded),
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    (hardware, gitref, measurement, params_identifier)
 }

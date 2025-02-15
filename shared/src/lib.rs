@@ -1,3 +1,6 @@
+pub mod subtext;
+pub mod title;
+
 use iggy_bench_report::{
     group_metrics_summary::BenchmarkGroupMetricsSummary, hardware::BenchmarkHardware,
     individual_metrics_summary::BenchmarkIndividualMetricsSummary, params::BenchmarkParams,

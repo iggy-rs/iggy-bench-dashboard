@@ -1,36 +1,41 @@
 use crate::components::chart::single_chart::SingleChart;
 use crate::components::chart::trend_chart::TrendChart;
 use crate::components::layout::topbar::TopBar;
-use crate::components::selectors::measurement_type_selector::MeasurementType;
 use crate::state::benchmark::use_benchmark;
-use crate::state::view_mode::ViewMode;
+use crate::state::ui::{use_ui, ViewMode};
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct MainContentProps {
-    pub selected_measurement: MeasurementType,
     pub selected_gitref: String,
     pub is_dark: bool,
-    pub is_benchmark_tooltip_visible: bool,
     pub on_theme_toggle: Callback<bool>,
-    pub on_benchmark_tooltip_toggle: Callback<()>,
-    pub on_measurement_select: Callback<MeasurementType>,
     pub view_mode: ViewMode,
 }
 
 #[function_component(MainContent)]
 pub fn main_content(props: &MainContentProps) -> Html {
     let benchmark_ctx = use_benchmark();
+    let ui = use_ui();
+    let selected_measurement = ui.selected_measurement.clone();
 
     let content = if let Some(selected_benchmark) = &benchmark_ctx.state.selected_benchmark {
         match props.view_mode {
             ViewMode::SingleGitref => {
                 html! {
                     <div class="content-wrapper">
+                            <div class="chart-title">
+                            <div class="chart-title-primary">
+                                { selected_benchmark.title(&selected_measurement.to_string()) }
+                            </div>
+                            <div class="chart-title-sub">
+                                { selected_benchmark.subtext() }
+                            </div>
+                        </div>
                         <div class="single-view">
                             <SingleChart
                                 benchmark_uuid={selected_benchmark.uuid}
-                                measurement_type={props.selected_measurement.clone()}
+                                measurement_type={selected_measurement.clone()}
                                 is_dark={props.is_dark}
                             />
                         </div>
@@ -40,10 +45,18 @@ pub fn main_content(props: &MainContentProps) -> Html {
             ViewMode::GitrefTrend => {
                 html! {
                     <div class="content-wrapper">
+                        <div class="chart-title">
+                            <div class="chart-title-primary">
+                                { selected_benchmark.title(&selected_measurement.to_string()) }
+                            </div>
+                            <div class="chart-title-sub">
+                                { selected_benchmark.params.format_params() }
+                            </div>
+                        </div>
                         <div class="trend-view">
                             <TrendChart
                                 params_identifier={selected_benchmark.params.params_identifier.clone()}
-                                measurement_type={props.selected_measurement.clone()}
+                                measurement_type={selected_measurement.clone()}
                                 is_dark={props.is_dark}
                             />
                         </div>
@@ -74,12 +87,8 @@ pub fn main_content(props: &MainContentProps) -> Html {
         <div class="content">
             <TopBar
                 is_dark={props.is_dark}
-                is_benchmark_tooltip_visible={props.is_benchmark_tooltip_visible}
                 selected_gitref={props.selected_gitref.clone()}
-                selected_measurement={props.selected_measurement.clone()}
                 on_theme_toggle={props.on_theme_toggle.clone()}
-                on_benchmark_tooltip_toggle={props.on_benchmark_tooltip_toggle.clone()}
-                on_measurement_select={props.on_measurement_select.clone()}
             />
             {content}
         </div>

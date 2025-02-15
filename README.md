@@ -1,4 +1,4 @@
-# Iggy Benchmarks Dashboard
+# Apache Iggy Benchmarks Dashboard
 
 A modern, high-performance benchmark results dashboard for Iggy, built with Rust. This application provides a responsive web interface for visualizing and analyzing benchmark results.
 

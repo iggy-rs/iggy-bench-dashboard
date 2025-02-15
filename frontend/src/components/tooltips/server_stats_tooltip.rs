@@ -1,4 +1,4 @@
-use crate::state::view_mode::ViewMode;
+use crate::state::ui::ViewMode;
 use iggy_bench_dashboard_shared::BenchmarkReportLight;
 use yew::prelude::*;
 

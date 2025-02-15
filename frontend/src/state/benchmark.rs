@@ -74,7 +74,6 @@ impl BenchmarkState {
         let (selected_kind, selected_benchmark) =
             Self::determine_selection(&entries, current_state);
 
-        // Log the selection result
         Self::log_selection_result(&selected_kind, &selected_benchmark);
 
         BenchmarkState {
@@ -105,7 +104,6 @@ impl BenchmarkState {
         current: &BenchmarkReportLight,
         selected_kind: &mut BenchmarkKind,
     ) -> (BenchmarkKind, Option<BenchmarkReportLight>) {
-        // Create a temporary state to use find_matching_benchmark
         let temp_state = BenchmarkState {
             entries: entries.clone(),
             selected_benchmark: None,
@@ -187,6 +185,9 @@ impl Reducible for BenchmarkState {
             BenchmarkAction::SetBenchmarksForGitref(benchmarks, hardware) => {
                 self.handle_gitref_benchmarks(benchmarks, hardware)
             }
+            BenchmarkAction::SelectBenchmarkByParamsIdentifier(params_identifier) => {
+                self.handle_benchmark_selection_by_params_identifier(&params_identifier)
+            }
         };
 
         Rc::new(next_state)
@@ -262,6 +263,45 @@ impl BenchmarkState {
 
         Self::create_with_entries(entries, self, hardware)
     }
+
+    /// Select a benchmark by its params identifier
+    fn handle_benchmark_selection_by_params_identifier(
+        &self,
+        params_identifier: &str,
+    ) -> BenchmarkState {
+        let mut found_benchmark: Option<BenchmarkReportLight> = None;
+        let mut found_kind: Option<BenchmarkKind> = None;
+
+        for (kind, reports) in &self.entries {
+            if let Some(report) = reports
+                .iter()
+                .find(|r| r.params.params_identifier == params_identifier)
+            {
+                found_benchmark = Some(report.clone());
+                found_kind = Some(*kind);
+                break;
+            }
+        }
+
+        if let Some(bm) = found_benchmark {
+            let new_kind = found_kind.unwrap();
+            log!(format!(
+                "Selected benchmark by params identifier: {:?} (kind={:?})",
+                bm.params.params_identifier, new_kind
+            ));
+            BenchmarkState {
+                selected_benchmark: Some(bm),
+                selected_kind: new_kind,
+                ..(*self).clone()
+            }
+        } else {
+            log!(format!(
+                "No matching benchmark with params identifier {} found in state entries",
+                params_identifier
+            ));
+            self.clone()
+        }
+    }
 }
 
 /// Actions that can be performed on the benchmark state
@@ -273,6 +313,8 @@ pub enum BenchmarkAction {
     SelectBenchmarkKind(BenchmarkKind),
     /// Set benchmarks for a specific git reference
     SetBenchmarksForGitref(Vec<BenchmarkReportLight>, String),
+    /// Select a benchmark by its params identifier
+    SelectBenchmarkByParamsIdentifier(String),
 }
 
 /// Context for managing benchmark state

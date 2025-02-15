@@ -6,25 +6,23 @@ use crate::components::tooltips::benchmark_info_tooltip::BenchmarkInfoTooltip;
 use crate::components::tooltips::server_stats_toggle::ServerStatsToggle;
 use crate::components::tooltips::server_stats_tooltip::ServerStatsTooltip;
 use crate::state::benchmark::use_benchmark;
-use crate::state::view_mode::use_view_mode;
+use crate::state::ui::{use_ui, UiAction};
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct TopBarProps {
     pub is_dark: bool,
-    pub is_benchmark_tooltip_visible: bool,
     pub selected_gitref: String,
-    pub selected_measurement: MeasurementType,
     pub on_theme_toggle: Callback<bool>,
-    pub on_benchmark_tooltip_toggle: Callback<()>,
-    pub on_measurement_select: Callback<MeasurementType>,
 }
 
 #[function_component(TopBar)]
 pub fn topbar(props: &TopBarProps) -> Html {
     let benchmark_ctx = use_benchmark();
-    let view_mode_ctx = use_view_mode();
-    let is_server_stats_visible = use_state(|| false);
+    let ui_state = use_ui();
+    let selected_measurement = ui_state.selected_measurement.clone();
+    let is_benchmark_tooltip_visible = ui_state.is_benchmark_tooltip_visible;
+    let is_server_stats_tooltip_visible = ui_state.is_server_stats_tooltip_visible;
 
     let on_download_artifacts = {
         let benchmark_ctx = benchmark_ctx.clone();
@@ -36,9 +34,23 @@ pub fn topbar(props: &TopBarProps) -> Html {
     };
 
     let on_server_stats_toggle = {
-        let is_server_stats_visible = is_server_stats_visible.clone();
+        let ui_state = ui_state.clone();
         Callback::from(move |_| {
-            is_server_stats_visible.set(!*is_server_stats_visible);
+            ui_state.dispatch(UiAction::ToggleServerStatsTooltip);
+        })
+    };
+
+    let on_measurement_select = {
+        let ui_state = ui_state.clone();
+        Callback::from(move |mt: MeasurementType| {
+            ui_state.dispatch(UiAction::SetMeasurementType(mt));
+        })
+    };
+
+    let on_benchmark_tooltip_toggle = {
+        let ui_state = ui_state.clone();
+        Callback::from(move |_| {
+            ui_state.dispatch(UiAction::ToggleBenchmarkTooltip);
         })
     };
 
@@ -67,16 +79,16 @@ pub fn topbar(props: &TopBarProps) -> Html {
                                 </button>
                                 <div class="info-container">
                                     <ServerStatsToggle
-                                        is_visible={*is_server_stats_visible}
+                                        is_visible={is_server_stats_tooltip_visible}
                                         on_toggle={on_server_stats_toggle.clone()}
                                     />
                                     {
-                                        if *is_server_stats_visible {
+                                        if is_server_stats_tooltip_visible {
                                             html! {
                                                 <ServerStatsTooltip
                                                     benchmark_report={benchmark_ctx.state.selected_benchmark.clone()}
                                                     visible={true}
-                                                    view_mode={view_mode_ctx.mode.clone()}
+                                                    view_mode={ui_state.view_mode.clone()}
                                                 />
                                             }
                                         } else {
@@ -86,16 +98,16 @@ pub fn topbar(props: &TopBarProps) -> Html {
                                 </div>
                                 <div class="info-container">
                                     <BenchmarkInfoToggle
-                                        is_visible={props.is_benchmark_tooltip_visible}
-                                        on_toggle={props.on_benchmark_tooltip_toggle.clone()}
+                                        is_visible={is_benchmark_tooltip_visible}
+                                        on_toggle={on_benchmark_tooltip_toggle.clone()}
                                     />
                                     {
-                                        if props.is_benchmark_tooltip_visible && benchmark_ctx.state.selected_benchmark.is_some() {
+                                        if is_benchmark_tooltip_visible && benchmark_ctx.state.selected_benchmark.is_some() {
                                             html! {
                                                 <BenchmarkInfoTooltip
                                                     benchmark_report={benchmark_ctx.state.selected_benchmark.clone().unwrap()}
                                                     visible={true}
-                                                    view_mode={view_mode_ctx.mode.clone()}
+                                                    view_mode={ui_state.view_mode.clone()}
                                                 />
                                             }
                                         } else {
@@ -107,18 +119,18 @@ pub fn topbar(props: &TopBarProps) -> Html {
                                     <button
                                         class={classes!(
                                             "measurement-button",
-                                            (props.selected_measurement == MeasurementType::Latency).then_some("active")
+                                            (selected_measurement == MeasurementType::Latency).then_some("active")
                                         )}
-                                        onclick={props.on_measurement_select.reform(|_| MeasurementType::Latency)}
+                                        onclick={on_measurement_select.reform(|_| MeasurementType::Latency)}
                                     >
                                         { "Latency" }
                                     </button>
                                     <button
                                         class={classes!(
                                             "measurement-button",
-                                            (props.selected_measurement == MeasurementType::Throughput).then_some("active")
+                                            (selected_measurement == MeasurementType::Throughput).then_some("active")
                                         )}
-                                        onclick={props.on_measurement_select.reform(|_| MeasurementType::Throughput)}
+                                        onclick={on_measurement_select.reform(|_| MeasurementType::Throughput)}
                                     >
                                         { "Throughput" }
                                     </button>

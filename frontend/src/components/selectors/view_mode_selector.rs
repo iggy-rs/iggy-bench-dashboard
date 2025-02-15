@@ -1,15 +1,19 @@
-use crate::state::view_mode::{use_view_mode, ViewMode, ViewModeAction};
+use crate::state::ui::{use_ui, UiAction, ViewMode};
 use yew::prelude::*;
 
 #[function_component(ViewModeSelector)]
 pub fn view_mode_toggle() -> Html {
-    let view_mode_ctx = use_view_mode();
-    let is_trend_view = matches!(view_mode_ctx.mode, ViewMode::GitrefTrend);
+    let ui_state = use_ui();
+    let is_trend_view = matches!(ui_state.view_mode, ViewMode::GitrefTrend);
 
     let onclick = {
-        let view_mode_ctx = view_mode_ctx.clone();
+        let ui_state = ui_state.clone();
         Callback::from(move |_| {
-            view_mode_ctx.dispatch(ViewModeAction::ToggleMode);
+            ui_state.dispatch(UiAction::SetViewMode(if is_trend_view {
+                ViewMode::SingleGitref
+            } else {
+                ViewMode::GitrefTrend
+            }));
         })
     };
 
