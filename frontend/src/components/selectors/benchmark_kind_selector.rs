@@ -14,7 +14,6 @@ pub struct BenchmarkKindSelectorProps {
 pub fn benchmark_kind_selector(props: &BenchmarkKindSelectorProps) -> Html {
     let benchmark_ctx = use_benchmark();
 
-    // Function to count benchmarks for a specific kind
     let count_benchmarks = |kind: BenchmarkKind| -> usize {
         benchmark_ctx
             .state
@@ -135,7 +134,9 @@ pub fn benchmark_kind_selector(props: &BenchmarkKindSelectorProps) -> Html {
                         class={classes!(
                             "benchmark-option",
                             matches!(props.selected_kind, BenchmarkKind::EndToEndProducingConsumer).then_some("active"),
-                            (!props.available_kinds.contains(&BenchmarkKind::EndToEndProducingConsumer)).then_some("inactive")
+                            ((!matches!(props.selected_kind, BenchmarkKind::EndToEndProducingConsumer))
+                                && (!props.available_kinds.contains(&BenchmarkKind::EndToEndProducingConsumer)))
+                                .then_some("inactive")
                         )}
                         onclick={
                             let on_kind_select = props.on_kind_select.clone();
@@ -143,13 +144,17 @@ pub fn benchmark_kind_selector(props: &BenchmarkKindSelectorProps) -> Html {
                         }
                     >
                         <span class="benchmark-option-icon">{"↔"}</span>
-                        <span class="benchmark-option-label">{"Producing Consumer ("}{count_benchmarks(BenchmarkKind::EndToEndProducingConsumer)}{")"}</span>
+                        <span class="benchmark-option-label">
+                            {"Producing Consumer ("}{count_benchmarks(BenchmarkKind::EndToEndProducingConsumer)}{")"}
+                        </span>
                     </button>
                     <button
                         class={classes!(
                             "benchmark-option",
                             matches!(props.selected_kind, BenchmarkKind::EndToEndProducingConsumerGroup).then_some("active"),
-                            (!props.available_kinds.contains(&BenchmarkKind::EndToEndProducingConsumerGroup)).then_some("inactive")
+                            ((!matches!(props.selected_kind, BenchmarkKind::EndToEndProducingConsumerGroup))
+                                && (!props.available_kinds.contains(&BenchmarkKind::EndToEndProducingConsumerGroup)))
+                                .then_some("inactive")
                         )}
                         onclick={
                             let on_kind_select = props.on_kind_select.clone();
@@ -157,7 +162,9 @@ pub fn benchmark_kind_selector(props: &BenchmarkKindSelectorProps) -> Html {
                         }
                     >
                         <span class="benchmark-option-icon">{"↔"}</span>
-                        <span class="benchmark-option-label">{"Producing Consumer Group ("}{count_benchmarks(BenchmarkKind::EndToEndProducingConsumerGroup)}{")"}</span>
+                        <span class="benchmark-option-label">
+                            {"Producing Consumer Group ("}{count_benchmarks(BenchmarkKind::EndToEndProducingConsumerGroup)}{")"}
+                        </span>
                     </button>
                 </>
             }

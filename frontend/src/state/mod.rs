@@ -1,4 +1,5 @@
 pub mod benchmark;
 pub mod gitref;
 pub mod hardware;
-pub mod view_mode;
+pub mod ui;
+// pub mod view_mode;

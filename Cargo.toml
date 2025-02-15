@@ -3,9 +3,9 @@ members = ["frontend", "runner", "server", "shared"]
 resolver = "2"
 
 [workspace.package]
-version = "0.2.6"
+version = "0.3.0"
 edition = "2021"
 license = "Apache-2.0"
 
 [workspace.dependencies]
-iggy-bench-report = { git = "https://github.com/iggy-rs/iggy.git", branch = "master" }
+iggy-bench-report = { git = "https://github.com/iggy-rs/iggy.git", branch = "bench-no-title-chart" }

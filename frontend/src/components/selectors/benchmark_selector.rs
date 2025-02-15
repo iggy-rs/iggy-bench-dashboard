@@ -16,7 +16,6 @@ pub fn benchmark_selector(props: &BenchmarkSelectorProps) -> Html {
     let benchmark_ctx = use_benchmark();
     let selected_kind = benchmark_ctx.state.selected_kind;
 
-    // Get all available benchmark kinds based on the category
     let available_kinds: HashSet<_> = benchmark_ctx
         .state
         .entries
@@ -52,7 +51,6 @@ pub fn benchmark_selector(props: &BenchmarkSelectorProps) -> Html {
         .cloned()
         .collect();
 
-    // Create a longer-lived reference to the current benchmarks
     let empty_vec = Vec::new();
     let current_benchmarks = benchmark_ctx
         .state
@@ -82,7 +80,6 @@ pub fn benchmark_selector(props: &BenchmarkSelectorProps) -> Html {
         })
     };
 
-    // Get the current benchmark's pretty_name if it exists
     let current_value = benchmark_ctx
         .state
         .selected_benchmark

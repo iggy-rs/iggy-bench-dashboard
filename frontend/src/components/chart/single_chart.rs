@@ -70,19 +70,17 @@ pub fn single_chart(props: &SingleChartProps) -> Html {
                     element_id: "single-chart-canvas".to_string(),
                 };
 
-                // Dispose existing chart if any
                 if echarts.is_some() {
                     dispose_chart("single-chart-canvas");
                 }
 
-                // Only render if we're not loading
                 if !is_loading {
                     let chart = match measurement_type {
                         MeasurementType::Latency => {
-                            iggy_bench_report::create_latency_chart(data, config.is_dark)
+                            iggy_bench_report::create_latency_chart(data, config.is_dark, true)
                         }
                         MeasurementType::Throughput => {
-                            iggy_bench_report::create_throughput_chart(data, config.is_dark)
+                            iggy_bench_report::create_throughput_chart(data, config.is_dark, true)
                         }
                     };
 

@@ -2,48 +2,47 @@ mod api;
 mod components;
 mod config;
 mod error;
+mod router;
 mod state;
 
 use crate::{
     components::{app_content::AppContent, footer::Footer},
-    state::{hardware::HardwareProvider, view_mode::ViewModeProvider},
+    state::hardware::HardwareProvider,
 };
-use components::{
-    selectors::measurement_type_selector::MeasurementType, theme::theme_provider::ThemeProvider,
-};
-use state::{benchmark::BenchmarkProvider, gitref::GitrefProvider};
+use components::theme::theme_provider::ThemeProvider;
+use router::AppRoute;
+use state::{benchmark::BenchmarkProvider, gitref::GitrefProvider, ui::UiProvider};
 use yew::prelude::*;
+use yew_router::{BrowserRouter, Switch};
 
 #[function_component(App)]
 pub fn app() -> Html {
-    let selected_measurement = use_state(|| MeasurementType::Latency);
-    let is_benchmark_tooltip_visible = use_state(|| false);
-
     html! {
-        <ThemeProvider>
-            <div class="app-container">
-                <HardwareProvider>
-                    <GitrefProvider>
-                        <BenchmarkProvider>
-                            <ViewModeProvider>
-                                <AppContent
-                                    selected_measurement={(*selected_measurement).clone()}
-                                    on_measurement_select={Callback::from(move |measurement_type| {
-                                        selected_measurement.set(measurement_type);
-                                    })}
-                                    is_benchmark_tooltip_visible={*is_benchmark_tooltip_visible}
-                                    on_benchmark_tooltip_toggle={Callback::from(move |()| {
-                                        let current = *is_benchmark_tooltip_visible;
-                                        is_benchmark_tooltip_visible.set(!current);
-                                    })}
-                                />
-                            </ViewModeProvider>
-                        </BenchmarkProvider>
-                    </GitrefProvider>
-                </HardwareProvider>
-                <Footer />
-            </div>
-        </ThemeProvider>
+        <BrowserRouter>
+            <Switch<AppRoute> render={switch} />
+        </BrowserRouter>
+    }
+}
+
+fn switch(routes: AppRoute) -> Html {
+    match routes {
+        AppRoute::Single | AppRoute::Home => html! {
+            <ThemeProvider>
+                <UiProvider>
+                    <div class="app-container">
+                        <HardwareProvider>
+                            <GitrefProvider>
+                                <BenchmarkProvider>
+                                    <AppContent />
+                                </BenchmarkProvider>
+                            </GitrefProvider>
+                        </HardwareProvider>
+                        <Footer />
+                    </div>
+                </UiProvider>
+            </ThemeProvider>
+        },
+        AppRoute::NotFound => html! { "404 Not Found" },
     }
 }
 
