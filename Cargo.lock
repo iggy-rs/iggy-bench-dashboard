@@ -1877,7 +1877,7 @@ dependencies = [
 
 [[package]]
 name = "iggy-bench-dashboard-frontend"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "charming",
  "gloo 0.11.0",
@@ -1896,7 +1896,7 @@ dependencies = [
 
 [[package]]
 name = "iggy-bench-dashboard-server"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "actix-cors",
  "actix-files",
@@ -1920,7 +1920,7 @@ dependencies = [
 
 [[package]]
 name = "iggy-bench-dashboard-shared"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "iggy-bench-report",
  "serde",
@@ -1947,7 +1947,7 @@ dependencies = [
 
 [[package]]
 name = "iggy-bench-runner"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "anyhow",
  "clap",
