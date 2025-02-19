@@ -15,10 +15,8 @@ use tracing_subscriber::{
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Parse arguments first
     let args = IggyBenchRunnerArgs::parse();
 
-    // Initialize tracing
     let env_filter =
         EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(&args.log_level));
 
@@ -28,7 +26,8 @@ async fn main() -> Result<()> {
         .try_init()
         .unwrap();
 
-    // Validate configuration
+    info!("Starting IggyBenchRunner with args: {:?}", args);
+
     if let Err(e) = args.validate() {
         error!("Configuration error: {}", e);
         std::process::exit(1);
@@ -38,5 +37,7 @@ async fn main() -> Result<()> {
     info!("Log level: {}", args.log_level);
 
     let app = IggyBenchRunnerApp::new(args)?;
-    app.run().await
+    let res = app.run().await;
+    info!("Benchmark run result: {:?}", res);
+    res
 }

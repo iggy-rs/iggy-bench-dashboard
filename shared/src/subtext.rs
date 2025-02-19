@@ -6,19 +6,16 @@ impl BenchmarkReportLight {
         let params_text = self.params.format_params();
         let mut stats = Vec::new();
 
-        // First add latency stats
         let latency_stats = self.format_latency_stats();
         if !latency_stats.is_empty() {
             stats.push(latency_stats);
         }
 
-        // Then add throughput stats
         let throughput_stats = self.format_throughput_stats();
         if !throughput_stats.is_empty() {
             stats.push(throughput_stats);
         }
 
-        // For SendAndPoll tests, add total throughput as last line
         if matches!(
             self.params.benchmark_kind,
             BenchmarkKind::PinnedProducerAndConsumer

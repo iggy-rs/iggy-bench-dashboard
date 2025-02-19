@@ -2,22 +2,41 @@ use super::{BenchmarkCache, Result};
 use crate::error::IggyBenchDashboardServerError;
 use iggy_bench_dashboard_shared::BenchmarkReportLight;
 use std::path::Path;
+use tokio::io::AsyncReadExt;
 use tracing::{error, info};
 
 impl BenchmarkCache {
-    pub fn load(&self) -> Result<()> {
+    pub async fn load(&self) -> Result<()> {
         info!(
             "Building benchmark cache from directory {}",
             self.results_dir.display()
         );
 
+        self.load_gh_workflows().await;
+
         let entries: Vec<_> = std::fs::read_dir(&self.results_dir)
             .map_err(IggyBenchDashboardServerError::Io)?
-            .filter_map(|r| r.ok())
+            .filter_map(|r: std::result::Result<std::fs::DirEntry, std::io::Error>| r.ok())
             .filter(|entry| entry.file_type().map(|t| t.is_dir()).unwrap_or(false))
             .collect();
 
+        let mut total_removed_size = 0;
+
         entries.iter().for_each(|entry| {
+            // Remove HTML files from the directory
+            match self.remove_html_files(&entry.path()) {
+                Ok(size) => {
+                    total_removed_size += size;
+                }
+                Err(e) => {
+                    error!(
+                        "Failed to remove HTML files from {}: {}",
+                        entry.path().display(),
+                        e
+                    );
+                }
+            }
+
             // Relative path to report.json, for example `./performance_results/poll_8_1000_100_10000_tcp_no_cache_e1393367_atlas/report.json`
             let path = entry.path().join("report.json");
 
@@ -69,6 +88,11 @@ impl BenchmarkCache {
                 .insert(light_report.uuid, (light_report, path));
         });
 
+        info!(
+            "Remove HTML files of size: {:.2} MB",
+            total_removed_size as f64 / 1_048_576.0
+        );
+
         Ok(())
     }
 
@@ -91,5 +115,74 @@ impl BenchmarkCache {
             );
             IggyBenchDashboardServerError::InvalidJson(e.to_string())
         })
+    }
+
+    async fn load_gh_workflows(&self) {
+        let mut data = String::new();
+        let read = self
+            .gh_workflows_file
+            .lock()
+            .await
+            .read_to_string(&mut data)
+            .await;
+
+        match read {
+            Ok(0) => {
+                info!("No GH workflows file found")
+            }
+            Ok(1_usize..) => {
+                info!("Loaded GH workflows file");
+                data.lines().for_each(|line| {
+                    info!("Adding GH workflow: {}", line);
+                    self.gh_workflows.insert(line.parse().unwrap());
+                });
+            }
+            Err(e) => {
+                info!("Error reading GH workflows file: {e}");
+            }
+        }
+    }
+
+    pub fn remove_html_files(&self, entry_path: &Path) -> std::io::Result<u64> {
+        let html_files: Vec<_> = std::fs::read_dir(entry_path)?
+            .filter_map(|r| r.ok())
+            .filter(|entry| {
+                entry
+                    .path()
+                    .extension()
+                    .map(|ext| ext == "html")
+                    .unwrap_or(false)
+            })
+            .collect();
+
+        let mut total_size = 0;
+
+        for html_file in html_files {
+            let metadata = match html_file.metadata() {
+                Ok(meta) => meta,
+                Err(e) => {
+                    error!(
+                        "Failed to get metadata for file {}: {}",
+                        html_file.path().display(),
+                        e
+                    );
+                    continue;
+                }
+            };
+
+            let file_size = metadata.len();
+            if let Err(e) = std::fs::remove_file(html_file.path()) {
+                error!(
+                    "Failed to remove HTML file {} (size: {} bytes): {}",
+                    html_file.path().display(),
+                    file_size,
+                    e
+                );
+            } else {
+                total_size += file_size;
+            }
+        }
+
+        Ok(total_size)
     }
 }

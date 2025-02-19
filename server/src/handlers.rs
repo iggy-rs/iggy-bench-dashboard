@@ -225,7 +225,7 @@ pub async fn get_benchmark_trend(
 }
 
 #[get("/api/artifacts/{uuid}")]
-pub async fn get_test_artifacts(
+pub async fn get_test_artifacts_zip(
     data: web::Data<AppState>,
     uuid_str: web::Path<String>,
     req: HttpRequest,
