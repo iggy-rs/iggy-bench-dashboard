@@ -11,7 +11,7 @@ use octocrab::{
 use std::io::Cursor;
 use tempfile::TempDir;
 use tokio::fs::read_dir;
-use tracing::info;
+use tracing::{info, trace};
 use zip::ZipArchive;
 
 const OWNER: &str = "iggy-rs";
@@ -57,7 +57,7 @@ impl IggyBenchDashboardGithubClient {
         })?;
         let artifact_id = artifact.id;
 
-        info!("Downloading artifact ID: {}", artifact_id);
+        info!("Downloading new artifact ID: {}", artifact_id);
 
         let bytes = self
             .octocrab
@@ -157,7 +157,7 @@ impl IggyBenchDashboardGithubClient {
             .into_iter()
             .collect();
 
-        info!(
+        trace!(
             "Found {} successful workflow runs on {} branch",
             runs.len(),
             branch
