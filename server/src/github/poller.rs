@@ -65,7 +65,7 @@ async fn poll_github_with_shutdown(
             break;
         }
 
-        info!("Woken up...");
+        trace!("Woken up...");
 
         let workflows = gh.get_successful_workflow_runs(&branch).await?;
         if workflows.is_empty() {
