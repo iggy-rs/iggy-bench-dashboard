@@ -23,3 +23,6 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "time"] }
 uuid = { version = "1.13.1", features = ["serde"] }
 zip = { version = "2.2.2", features = ["deflate"] }
 walkdir = "2.5.0"
+tempfile = "3.17.1"
+octocrab = "0.43.0"
+file-operation = "0.4.1"

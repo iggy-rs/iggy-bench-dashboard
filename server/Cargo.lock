@@ -762,18 +762,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "iggy-yew-server"
-version = "0.1.0"
-dependencies = [
- "actix-cors",
- "actix-files",
- "actix-web",
- "anyhow",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "impl-more"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"

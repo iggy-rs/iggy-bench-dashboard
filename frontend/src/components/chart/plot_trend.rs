@@ -72,48 +72,61 @@ fn create_latency_trend_chart(data: &[BenchmarkReportLight], is_dark: bool) -> C
     let mut consumer_p99_latencies = Vec::new();
     let mut consumer_p999_latencies = Vec::new();
 
+    let mut producing_consumer_avg_latencies = Vec::new();
+    let mut producing_consumer_p95_latencies = Vec::new();
+    let mut producing_consumer_p99_latencies = Vec::new();
+    let mut producing_consumer_p999_latencies = Vec::new();
+
     let mut chart = IggyChart::new(&title, &subtext, is_dark, true)
         .with_category_x_axis("Version", gitrefs)
         .with_y_axis("Latency [ms]");
 
     for report in data {
-        let mut send_summary: Option<&BenchmarkGroupMetricsSummary> = None;
-        let mut poll_summary: Option<&BenchmarkGroupMetricsSummary> = None;
+        let mut producers_summary: Option<&BenchmarkGroupMetricsSummary> = None;
+        let mut consumers_summary: Option<&BenchmarkGroupMetricsSummary> = None;
+        let mut producing_consumers_summary: Option<&BenchmarkGroupMetricsSummary> = None;
 
         for group_metric in &report.group_metrics {
             match group_metric.summary.kind {
                 GroupMetricsKind::Producers => {
-                    send_summary = Some(&group_metric.summary);
+                    producers_summary = Some(&group_metric.summary);
                 }
                 GroupMetricsKind::Consumers => {
-                    poll_summary = Some(&group_metric.summary);
+                    consumers_summary = Some(&group_metric.summary);
                 }
-                // GroupMetricsKind::ProducersAndConsumers => {
-                // for now ignored
-                // }
+                GroupMetricsKind::ProducersAndConsumers => {
+                    producing_consumers_summary = Some(&group_metric.summary);
+                }
                 _ => {}
             }
         }
 
-        if let Some(summary) = send_summary {
+        if let Some(summary) = producers_summary {
             producer_avg_latencies.push(summary.average_latency_ms);
             producer_p95_latencies.push(summary.average_p95_latency_ms);
             producer_p99_latencies.push(summary.average_p99_latency_ms);
             producer_p999_latencies.push(summary.average_p999_latency_ms);
         }
 
-        if let Some(summary) = poll_summary {
+        if let Some(summary) = consumers_summary {
             consumer_avg_latencies.push(summary.average_latency_ms);
             consumer_p95_latencies.push(summary.average_p95_latency_ms);
             consumer_p99_latencies.push(summary.average_p99_latency_ms);
             consumer_p999_latencies.push(summary.average_p999_latency_ms);
+        }
+
+        if let Some(summary) = producing_consumers_summary {
+            producing_consumer_avg_latencies.push(summary.average_latency_ms);
+            producing_consumer_p95_latencies.push(summary.average_p95_latency_ms);
+            producing_consumer_p99_latencies.push(summary.average_p99_latency_ms);
+            producing_consumer_p999_latencies.push(summary.average_p999_latency_ms);
         }
     }
 
     chart = if !producer_avg_latencies.is_empty() {
         chart
             .add_series(
-                "Producer Average Latency",
+                "Producer Avg Latency",
                 producer_avg_latencies,
                 Symbol::Circle,
                 "#5470c6",
@@ -143,7 +156,7 @@ fn create_latency_trend_chart(data: &[BenchmarkReportLight], is_dark: bool) -> C
     chart = if !consumer_avg_latencies.is_empty() {
         chart
             .add_series(
-                "Consumer Average Latency",
+                "Consumer Avg Latency",
                 consumer_avg_latencies,
                 Symbol::Circle,
                 "#73c0de",
@@ -163,6 +176,36 @@ fn create_latency_trend_chart(data: &[BenchmarkReportLight], is_dark: bool) -> C
             .add_series(
                 "Consumer P999 Latency",
                 consumer_p999_latencies,
+                Symbol::Rect,
+                "#ea7ccc",
+            )
+    } else {
+        chart
+    };
+
+    chart = if !producing_consumer_avg_latencies.is_empty() {
+        chart
+            .add_series(
+                "Producing Consumers Avg Latency",
+                producing_consumer_avg_latencies,
+                Symbol::Circle,
+                "#73c0de",
+            )
+            .add_series(
+                "Producing Consumers P95 Latency",
+                producing_consumer_p95_latencies,
+                Symbol::Triangle,
+                "#3ba272",
+            )
+            .add_series(
+                "Producing Consumers P99 Latency",
+                producing_consumer_p99_latencies,
+                Symbol::Diamond,
+                "#fc8452",
+            )
+            .add_series(
+                "Producing Consumers P999 Latency",
+                producing_consumer_p999_latencies,
                 Symbol::Rect,
                 "#ea7ccc",
             )

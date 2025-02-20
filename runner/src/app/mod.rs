@@ -1,6 +1,6 @@
 mod local_benchmark_runner;
 mod utils;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use dircpy::copy_dir;
 use local_benchmark_runner::LocalBenchmarkRunner;
 use tracing::info;
@@ -36,7 +36,10 @@ impl IggyBenchRunnerApp {
         for commit in commits {
             info!("Processing commit: {}", commit);
             local_benchmark.checkout_to_gitref(&commit)?;
-            local_benchmark.run_benchmark().await?;
+            local_benchmark
+                .run_benchmark()
+                .await
+                .context("Failed to run benchmark")?;
         }
 
         let source_dir = repo_path + "/performance_results";

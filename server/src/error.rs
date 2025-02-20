@@ -28,3 +28,21 @@ impl ResponseError for IggyBenchDashboardServerError {
         }
     }
 }
+
+impl From<octocrab::Error> for IggyBenchDashboardServerError {
+    fn from(err: octocrab::Error) -> Self {
+        Self::InternalError(err.to_string())
+    }
+}
+
+impl From<zip::result::ZipError> for IggyBenchDashboardServerError {
+    fn from(err: zip::result::ZipError) -> Self {
+        Self::InternalError(err.to_string())
+    }
+}
+
+impl From<std::env::VarError> for IggyBenchDashboardServerError {
+    fn from(err: std::env::VarError) -> Self {
+        Self::InternalError(err.to_string())
+    }
+}

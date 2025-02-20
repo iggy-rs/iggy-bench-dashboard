@@ -1,6 +1,7 @@
+mod args;
 mod cache;
-mod config;
 mod error;
+mod github;
 mod handlers;
 
 use crate::cache::CacheWatcher;
@@ -11,8 +12,9 @@ use actix_web::{
     middleware::{Compress, Logger},
     web, App, HttpServer,
 };
+use args::{IggyBenchDashboardServerArgs, PollGithub};
 use cache::BenchmarkCache;
-use config::IggyBenchDashboardServerConfig;
+use github::IggyBenchDashboardGithubPoller;
 use handlers::AppState;
 use std::sync::Arc;
 use tracing::{error, info};
@@ -34,13 +36,12 @@ async fn index() -> actix_web::Result<NamedFile> {
 }
 
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    // Load configuration first
-    let config = IggyBenchDashboardServerConfig::parse();
+async fn main() -> Result<(), std::io::Error> {
+    let args = IggyBenchDashboardServerArgs::parse();
+    args.validate();
 
-    // Initialize tracing
     let env_filter =
-        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(&config.log_level));
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(&args.log_level));
 
     tracing_subscriber::registry()
         .with(fmt::layer().event_format(Format::default().with_thread_ids(true)))
@@ -48,34 +49,43 @@ async fn main() -> std::io::Result<()> {
         .try_init()
         .unwrap();
 
-    // Validate configuration
-    if let Err(e) = config.validate() {
-        error!("Configuration error: {}", e);
-        std::process::exit(1);
-    }
+    let results_dir = args.results_dir.clone();
+    let addr = args.server_addr();
+    let cors_origins = args.cors_origins_list();
 
-    let results_dir = config.results_dir.clone();
-    let addr = config.server_addr();
-    let cors_origins = config.cors_origins_list();
-
-    // Initialize cache
-    let cache = Arc::new(BenchmarkCache::new(results_dir.clone()));
+    let cache = Arc::new(BenchmarkCache::new(results_dir.clone()).await);
     info!("Starting cache load...");
     let start = std::time::Instant::now();
-    if let Err(e) = cache.load() {
+    if let Err(e) = cache.load().await {
         error!("Failed to load cache: {}", e);
         std::process::exit(1);
     }
     let duration = start.elapsed();
     info!("Cache loaded in {:.2?}", duration);
 
-    // Initialize file watcher
     let watcher = match CacheWatcher::new(Arc::clone(&cache), results_dir.clone()) {
         Ok(w) => Arc::new(w),
         Err(e) => {
             error!("Failed to initialize file watcher: {}", e);
             std::process::exit(1);
         }
+    };
+
+    let poller = if let Some(poller) = args.github {
+        match poller {
+            PollGithub::PollGithub(args) => {
+                info!("Starting GithubPoller for branch {}", args.branch);
+
+                Some(IggyBenchDashboardGithubPoller::start(
+                    results_dir.clone(),
+                    args.branch,
+                    args.interval_seconds,
+                    cache.clone(),
+                ))
+            }
+        }
+    } else {
+        None
     };
 
     let state = ServerState {
@@ -85,13 +95,12 @@ async fn main() -> std::io::Result<()> {
 
     info!("Starting server on {}", addr);
     info!("Results directory: {}", results_dir.display());
-    info!("Log level: {}", config.log_level);
-    info!("CORS origins: {}", config.cors_origins);
+    info!("Log level: {}", args.log_level);
+    info!("CORS origins: {}", args.cors_origins);
 
-    HttpServer::new(move || {
+    let server = HttpServer::new(move || {
         let state = state.clone();
 
-        // CORS configuration
         let cors = if cors_origins.contains(&"*".to_string()) {
             Cors::default()
                 .allow_any_origin()
@@ -122,7 +131,6 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(AppState {
                 cache: Arc::clone(&state.cache),
             }))
-            // API routes
             .service(handlers::health_check)
             .service(handlers::list_hardware)
             .service(handlers::list_gitrefs_for_hardware)
@@ -131,17 +139,22 @@ async fn main() -> std::io::Result<()> {
             .service(handlers::get_benchmark_report_full)
             .service(handlers::get_benchmark_report_light)
             .service(handlers::get_benchmark_trend)
-            .service(handlers::get_test_artifacts)
-            // Serve static files from frontend/dist
+            .service(handlers::get_test_artifacts_zip)
             .service(
                 fs::Files::new("/", "frontend/dist")
                     .index_file("index.html")
                     .use_last_modified(true),
             )
-            // Fallback for SPA routing
             .default_service(web::route().to(index))
     })
     .bind(&addr)?
-    .run()
-    .await
+    .run();
+
+    server.await?;
+
+    if let Some(poller) = poller {
+        poller.shutdown().await;
+    }
+
+    Ok(())
 }

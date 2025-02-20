@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use crate::error::IggyBenchDashboardServerError;
 use octocrab::{
     models::{
         repos::Tag,
@@ -23,27 +23,38 @@ pub struct IggyBenchDashboardGithubClient {
 }
 
 impl IggyBenchDashboardGithubClient {
-    pub fn new() -> Result<Self> {
-        let token = std::env::var("GITHUB_TOKEN").context("GITHUB_TOKEN not set")?;
+    pub fn new() -> Result<Self, IggyBenchDashboardServerError> {
+        let token = std::env::var("GITHUB_TOKEN").map_err(|_| {
+            IggyBenchDashboardServerError::InternalError("GITHUB_TOKEN not set".into())
+        })?;
         let octocrab = Octocrab::builder().personal_token(token).build()?;
         Ok(Self { octocrab })
     }
-
-    pub async fn download_artifact(&self, workflow_id: u64) -> Result<TempDir> {
+    pub async fn download_artifact(
+        &self,
+        workflow_id: u64,
+    ) -> Result<TempDir, IggyBenchDashboardServerError> {
         let runs = self.get_all_workflow_runs().await?;
         if runs.is_empty() {
-            anyhow::bail!("No successful workflow runs found")
+            return Err(IggyBenchDashboardServerError::NotFound(
+                "No successful workflow runs found".into(),
+            ));
         }
 
         let run_id = RunId(workflow_id);
 
-        runs.iter().find(|run| run.id == run_id).context(format!(
-            "Workflow run {workflow_id} not found in {WORKFLOW_FILE}"
-        ))?;
+        runs.iter().find(|run| run.id == run_id).ok_or_else(|| {
+            IggyBenchDashboardServerError::NotFound(format!(
+                "Workflow run {} not found in {}",
+                workflow_id, WORKFLOW_FILE
+            ))
+        })?;
 
         let artifacts = self.get_artifacts_for_workflow_run(run_id).await?;
 
-        let artifact = &artifacts[0];
+        let artifact = artifacts.first().ok_or_else(|| {
+            IggyBenchDashboardServerError::NotFound("No artifacts found in the workflow run".into())
+        })?;
         let artifact_id = artifact.id;
 
         info!("Downloading artifact ID: {}", artifact_id);
@@ -103,11 +114,11 @@ impl IggyBenchDashboardGithubClient {
         }
 
         if entries.len() != 1 {
-            anyhow::bail!(
+            return Err(IggyBenchDashboardServerError::InternalError(format!(
                 "Expected exactly one directory in the unzipped artifact directory {}, found {}",
                 temp_dir.path().display(),
                 entries.len()
-            )
+            )));
         }
 
         Ok(temp_dir)
@@ -115,7 +126,7 @@ impl IggyBenchDashboardGithubClient {
 
     /// Retrieves workflow runs for the specified workflow file (`performance.yml`)
     /// that have a successful status.
-    async fn get_all_workflow_runs(&self) -> Result<Vec<Run>> {
+    async fn get_all_workflow_runs(&self) -> Result<Vec<Run>, IggyBenchDashboardServerError> {
         let runs: Vec<Run> = self
             .octocrab
             .workflows(OWNER, REPO)
@@ -130,8 +141,11 @@ impl IggyBenchDashboardGithubClient {
     }
 
     /// Retrieves workflow runs for the specified workflow file (`performance.yml`)
-    /// that were triggered on given branch and have a successful status.
-    pub async fn get_successful_workflow_runs(&self, branch: &str) -> Result<Vec<Run>> {
+    /// that were triggered on a given branch and have a successful status.
+    pub async fn get_successful_workflow_runs(
+        &self,
+        branch: &str,
+    ) -> Result<Vec<Run>, IggyBenchDashboardServerError> {
         let runs: Vec<Run> = self
             .octocrab
             .workflows(OWNER, REPO)
@@ -144,8 +158,9 @@ impl IggyBenchDashboardGithubClient {
             .collect();
 
         info!(
-            "Found {} successful workflow runs on {branch} branch",
+            "Found {} successful workflow runs on {} branch",
             runs.len(),
+            branch
         );
         Ok(runs)
     }
@@ -153,31 +168,38 @@ impl IggyBenchDashboardGithubClient {
     async fn get_artifacts_for_workflow_run(
         &self,
         run_id: RunId,
-    ) -> Result<Vec<WorkflowListArtifact>> {
-        let artifacts: Vec<WorkflowListArtifact> = self
+    ) -> Result<Vec<WorkflowListArtifact>, IggyBenchDashboardServerError> {
+        let artifact_response = self
             .octocrab
             .actions()
             .list_workflow_run_artifacts(OWNER, REPO, run_id)
             .send()
-            .await?
+            .await?;
+
+        let artifacts = artifact_response
             .value
-            .context(format!("No artifacts found for workflow run {run_id}"))?
+            .ok_or_else(|| {
+                IggyBenchDashboardServerError::NotFound(format!(
+                    "No artifacts found for workflow run {}",
+                    run_id
+                ))
+            })?
             .into_iter()
             .collect();
         Ok(artifacts)
     }
 
+    /// Given a list of tags and a commit SHA, returns the tag that starts with that commit SHA.
     pub fn get_tag_for_commit(tags: &Vec<Tag>, commit_sha: &str) -> Option<Tag> {
         for tag in tags {
             if tag.commit.sha.starts_with(commit_sha) {
                 return Some(tag.clone());
             }
         }
-
         None
     }
 
-    pub async fn get_server_tags(&self) -> Result<Vec<Tag>> {
+    pub async fn get_server_tags(&self) -> Result<Vec<Tag>, IggyBenchDashboardServerError> {
         let mut tags = Vec::new();
         let mut page = self.octocrab.repos(OWNER, REPO).list_tags().send().await?;
 

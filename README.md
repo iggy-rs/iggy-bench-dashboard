@@ -152,7 +152,7 @@ out --output-dir performance_results
 
    ```bash
    git clone <repository-url>
-   cd iggy-yew
+   cd iggy-bench-dashboard
    ```
 
 2. Run the development script:

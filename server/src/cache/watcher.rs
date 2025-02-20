@@ -50,7 +50,7 @@ impl BenchmarkCache {
 
         // Skip if reloaded recently
         if let Some(instant) = *last_reload {
-            if instant.elapsed() < Duration::from_secs(5) {
+            if instant.elapsed() < Duration::from_secs(10) {
                 return;
             }
         }
@@ -62,7 +62,7 @@ impl BenchmarkCache {
         info!("Reloading cache...");
 
         self.clear();
-        if let Err(e) = self.load() {
+        if let Err(e) = self.load().await {
             error!("Failed to reload cache: {}", e);
         }
     }
