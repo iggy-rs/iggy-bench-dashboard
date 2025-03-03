@@ -8,4 +8,4 @@ edition = "2021"
 license = "Apache-2.0"
 
 [workspace.dependencies]
-iggy-bench-report = { git = "https://github.com/iggy-rs/iggy.git", branch = "bench-no-title-chart" }
+iggy-bench-report = { git = "https://github.com/apache/iggy.git", branch = "bench-random" }

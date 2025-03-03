@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Exit on any error
-set -e
+set -euo pipefail
 
 # Function to cleanup background processes
 cleanup() {
