@@ -45,7 +45,7 @@ pub fn create_chart(
 }
 
 fn create_latency_trend_chart(data: &[BenchmarkReportLight], is_dark: bool) -> Chart {
-    let subtext = data[0].params.format_params();
+    let subtext = data[0].format_params();
     let title = trend_chart_title(&data[0].params, ChartKind::Latency);
 
     // Collect all GitRefs for the x-axis
@@ -234,7 +234,7 @@ fn create_throughput_trend_chart(data: &[BenchmarkReportLight], is_dark: bool) -
         })
         .collect();
 
-    let subtext = data[0].params.format_params();
+    let subtext = data[0].format_params();
     let gitrefs = data
         .iter()
         .map(|d| d.params.gitref.clone().unwrap_or("Unknown".to_string()))

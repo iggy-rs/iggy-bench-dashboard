@@ -1,6 +1,9 @@
 use gloo::console::log;
 use iggy_bench_dashboard_shared::BenchmarkReportLight;
-use iggy_bench_report::{benchmark_kind::BenchmarkKind, transport::BenchmarkTransport};
+use iggy_bench_report::{
+    benchmark_kind::BenchmarkKind, numeric_parameter::IggyBenchNumericParameter,
+    transport::BenchmarkTransport,
+};
 use std::{collections::BTreeMap, rc::Rc};
 use yew::prelude::*;
 
@@ -20,9 +23,9 @@ pub struct BenchmarkState {
 /// Helper struct to compare benchmark parameters
 #[derive(Debug)]
 struct BenchmarkParams<'a> {
-    message_size: u32,
-    message_batches: u32,
-    messages_per_batch: u32,
+    message_size: IggyBenchNumericParameter,
+    message_batches: u64,
+    messages_per_batch: IggyBenchNumericParameter,
     transport: BenchmarkTransport,
     remark: &'a Option<String>,
 }

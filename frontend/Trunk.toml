@@ -8,9 +8,6 @@ watch = ["src", "assets"]
 [serve]
 port = 8060
 
-[[proxy]]
-backend = "http://localhost:8061"
-
 [[hooks]]
 stage = "pre_build"
 command = "scripts/select_index.sh"

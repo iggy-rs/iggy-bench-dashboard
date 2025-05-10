@@ -50,7 +50,7 @@ pub fn main_content(props: &MainContentProps) -> Html {
                                 { selected_benchmark.title(&selected_measurement.to_string()) }
                             </div>
                             <div class="chart-title-sub">
-                                { selected_benchmark.params.format_params() }
+                                { selected_benchmark.format_params() }
                             </div>
                         </div>
                         <div class="trend-view">

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Exit on any error
-set -e
+set -euo pipefail
 
 # Build frontend
 trunk build --release --config frontend/Trunk.toml
