@@ -1,4 +1,6 @@
-# Apache Iggy Benchmarks Dashboard
+# The source code has been moved to [Apache Iggy](https://github.com/apache/iggy/)
+
+## Apache Iggy Benchmarks Dashboard
 
 A modern, high-performance benchmark results dashboard for Iggy, built with Rust. This application provides a responsive web interface for visualizing and analyzing benchmark results.
 
